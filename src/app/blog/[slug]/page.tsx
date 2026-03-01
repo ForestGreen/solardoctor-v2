@@ -63,7 +63,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
               Blog
             </Link>
             <Link
-              href="/auth"
+              href="/check"
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               Free Health Score
@@ -131,7 +131,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             commitment.
           </p>
           <Link
-            href="/auth"
+            href="/check"
             className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
           >
             Check Your System Now &rarr;

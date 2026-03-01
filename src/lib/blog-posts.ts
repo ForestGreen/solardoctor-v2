@@ -25,7 +25,7 @@ function ctaBlock(customHeadline?: string): string {
     <div class="mt-12 bg-green-50 rounded-2xl p-8 text-center">
       <h3 class="text-xl font-bold text-green-900 mb-2">${headline}</h3>
       <p class="text-green-700 mb-6">Get a free health score in 2 minutes. No credit card, no commitment.</p>
-      <a href="/auth" class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors">
+      <a href="/check" class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors">
         Check Your System Now &rarr;
       </a>
     </div>
@@ -38,7 +38,7 @@ function inlineCta(text?: string): string {
   return `
     <div class="my-8 border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
       <p class="text-green-800 font-medium mb-2">${t}</p>
-      <a href="/auth" class="text-green-700 font-semibold hover:text-green-900 underline">Get your free health score &rarr;</a>
+      <a href="/check" class="text-green-700 font-semibold hover:text-green-900 underline">Get your free health score &rarr;</a>
     </div>
   `;
 }

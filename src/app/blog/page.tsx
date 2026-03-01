@@ -22,7 +22,7 @@ export default function BlogPage() {
               Blog
             </Link>
             <Link
-              href="/auth"
+              href="/check"
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               Free Health Score
