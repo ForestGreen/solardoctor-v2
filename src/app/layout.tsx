@@ -15,6 +15,9 @@ export const metadata: Metadata = {
     "solar orphan",
     "rooftop solar",
   ],
+  verification: {
+    google: "IRXXsKmHpSjyv_b_cFO6zyQ56GbVj_4opp-Lh5GnmPc",
+  },
   openGraph: {
     title: "SolarDoctor - The Doctor Is In",
     description:
