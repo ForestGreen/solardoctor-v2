@@ -104,8 +104,8 @@ function generateShortId(): string {
   let result = "";
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
-  for (const byte of bytes) {
-    result += chars[byte % chars.length];
+  for (let i = 0; i < bytes.length; i++) {
+    result += chars[bytes[i] % chars.length];
   }
   return result;
 }
