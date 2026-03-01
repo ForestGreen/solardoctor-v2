@@ -106,6 +106,21 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
+        {/* FAQ Section */}
+        {post.faqs && post.faqs.length > 0 && (
+          <div className="mt-16 border-t border-gray-100 pt-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+            <div className="space-y-6">
+              {post.faqs.map((faq, i) => (
+                <div key={i} className="border border-gray-100 rounded-lg p-5">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* CTA */}
         <div className="mt-16 bg-green-50 rounded-2xl p-8 text-center">
           <h3 className="text-xl font-bold text-green-900 mb-2">
@@ -141,7 +156,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
       </article>
 
-      {/* Schema.org structured data for SEO */}
+      {/* Schema.org Article structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -164,6 +179,27 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           }),
         }}
       />
+
+      {/* FAQ Schema.org structured data for rich snippets */}
+      {post.faqs && post.faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: post.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer,
+                },
+              })),
+            }),
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,11 @@
 // Blog post data - static content for SEO
 // Each post targets specific inverter fault code keywords for organic search traffic
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -10,6 +15,7 @@ export interface BlogPost {
   readTime: string;
   metaDescription: string;
   content: string;
+  faqs?: FaqItem[];
 }
 
 // Helper to generate the CTA block for the end of every blog post
@@ -241,6 +247,12 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">This is exactly why continuous monitoring matters. SolarDoctor tracks your system's health score daily and alerts you immediately when production drops — so you can catch issues like isolation faults before they cost you money.</p>
     `,
+    faqs: [
+      { question: "What does a SolarEdge isolation fault mean?", answer: "An isolation fault means electrical current is leaking to ground somewhere in your solar system. Your SolarEdge inverter detected that the insulation between your DC wiring and ground has degraded below safe levels, so it shut down to protect your home." },
+      { question: "Can I fix a SolarEdge isolation fault myself?", answer: "No. Isolation faults involve potentially dangerous DC voltage and require a certified solar technician with specialized testing equipment (a megohmmeter) to diagnose and repair safely." },
+      { question: "How much does a SolarEdge isolation fault cost to repair?", answer: "Repair costs vary from $150-$500 for a simple connector replacement to $1,000+ if a power optimizer or panel needs replacement. If your equipment is under warranty, parts may be covered." },
+      { question: "Will a SolarEdge isolation fault go away on its own?", answer: "Sometimes the fault clears temporarily when moisture dries out, but the underlying issue remains. An intermittent isolation fault still indicates degraded insulation that will likely worsen over time." },
+    ],
   },
   {
     slug: "solaredge-arc-fault",
@@ -278,6 +290,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">Even false positives mean lost production time. SolarDoctor alerts you the moment your system stops producing, so you can get a technician out quickly — whether it's a real fault or a false alarm.</p>
     `,
+    faqs: [
+      { question: "What causes a SolarEdge arc fault?", answer: "Arc faults are caused by electrical arcing — sparks jumping across a gap in loose connectors, damaged wiring, or corroded contacts. The SolarEdge inverter detects the electrical signature of arcing and shuts down to prevent fire." },
+      { question: "Is a SolarEdge arc fault dangerous?", answer: "Yes, arc faults can cause fires if left unaddressed. The arc fault detection system is a safety feature designed to prevent rooftop fires from electrical arcing in your solar system." },
+      { question: "How do I reset a SolarEdge arc fault?", answer: "You cannot simply reset an arc fault — the underlying cause (loose connection, damaged wire, or corroded contact) must be found and repaired by a qualified solar technician before the system will operate safely." },
+    ],
   },
   {
     slug: "solaredge-communication-error",
@@ -313,6 +330,11 @@ export const blogPosts: BlogPost[] = [
       <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">The Hidden Cost</h2>
       <p class="mb-4">Communication errors are sneaky because your system may still appear to be producing power overall. But without optimizer-level data, you won't know if a panel is severely underperforming. SolarDoctor monitors your total system production against expected output — so even if an optimizer goes silent, you'll know if your overall production drops.</p>
     `,
+    faqs: [
+      { question: "Why is my SolarEdge inverter not communicating?", answer: "Common causes include WiFi or Ethernet connectivity issues, power optimizer communication failures, or a firmware glitch. Check your router connection first, then verify the inverter's communication LEDs." },
+      { question: "How do I fix SolarEdge communication errors?", answer: "Start by checking your internet connection to the inverter. Restart your router, verify the Ethernet cable or WiFi dongle is connected, and check if the SolarEdge monitoring portal shows the inverter online. If the issue persists, contact SolarEdge support." },
+      { question: "Does a SolarEdge communication error affect production?", answer: "Usually not — communication errors affect monitoring only. Your inverter likely continues producing electricity normally, but you won't see data updates in the monitoring portal until communication is restored." },
+    ],
   },
   {
     slug: "solaredge-dc-overvoltage",
@@ -341,6 +363,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor tracks your daily production and flags days where your health score drops. If DC overvoltage is causing repeated shutdowns, you'll see it reflected in a declining health score — giving you the data you need to justify a service call.</p>
     `,
+    faqs: [
+      { question: "What does DC overvoltage mean on a SolarEdge inverter?", answer: "DC overvoltage means the voltage from your solar panels exceeds the inverter's maximum input rating. This can happen when panels produce more voltage than expected, often in cold sunny conditions when panel voltage is highest." },
+      { question: "Is DC overvoltage dangerous?", answer: "Yes, sustained overvoltage can damage your inverter and void its warranty. The inverter shuts down to protect itself, but repeated overvoltage events indicate a system design issue that needs professional attention." },
+      { question: "What causes SolarEdge DC overvoltage?", answer: "The most common cause is too many panels wired in series on a single string, exceeding the inverter's maximum input voltage. Cold temperatures increase panel voltage, which is why this error often appears on cold sunny mornings." },
+    ],
   },
   {
     slug: "solaredge-ac-voltage-error",
@@ -373,6 +400,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">These errors can be frustrating because they're often outside your control. But knowing when they happen — and how much production you're losing — gives you the leverage to work with your utility to resolve the issue. SolarDoctor's health score tracking makes that impact visible.</p>
     `,
+    faqs: [
+      { question: "What does AC voltage error mean on SolarEdge?", answer: "An AC voltage error means the grid voltage at your home is outside the inverter's acceptable range (typically 211-264V for 240V systems). Your inverter shuts down because it cannot safely export power when grid voltage is too high or too low." },
+      { question: "Why does my SolarEdge show AC voltage too high?", answer: "High grid voltage is usually caused by your utility's distribution voltage being above normal, especially during low-demand periods. It can also occur if many solar systems in your neighborhood are exporting simultaneously, pushing local voltage up." },
+      { question: "Can I fix a SolarEdge AC voltage error myself?", answer: "You cannot fix grid voltage issues yourself. Contact your utility company to report high or low voltage. A licensed electrician can also check your home's electrical connections for loose or corroded wiring that might cause voltage drops." },
+    ],
   },
   {
     slug: "solaredge-temperature-fault",
@@ -406,6 +438,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">If over-temperature faults happen frequently despite good ventilation, it could indicate an internal hardware issue. SolarDoctor's health score helps you track the frequency and production impact of these events, giving you clear data to present to a service technician.</p>
     `,
+    faqs: [
+      { question: "What does a SolarEdge temperature fault mean?", answer: "A temperature fault means your SolarEdge inverter has overheated and shut down to protect its components. Inverters generate heat during operation and have built-in temperature limits to prevent damage." },
+      { question: "How do I fix a SolarEdge overheating inverter?", answer: "Ensure the inverter has adequate ventilation — at least 12 inches of clearance on all sides. Check that vents aren't blocked by debris, cobwebs, or nearby objects. If the inverter is in direct sunlight, consider adding shade. It should restart automatically once it cools down." },
+      { question: "At what temperature does a SolarEdge inverter shut down?", answer: "SolarEdge inverters typically begin power derating around 45°C (113°F) internal temperature and will shut down completely if internal temperatures exceed approximately 65°C (149°F). Ambient temperatures above 100°F can trigger issues." },
+    ],
   },
   {
     slug: "solaredge-ground-fault",
@@ -443,6 +480,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">The longer a ground fault goes unaddressed, the longer your entire system sits idle. With SolarDoctor monitoring, you'll know within a day that something is wrong — not weeks later when your electric bill arrives.</p>
     `,
+    faqs: [
+      { question: "What is a ground fault on a SolarEdge inverter?", answer: "A ground fault means electrical current is flowing through an unintended path to ground. This is different from an isolation fault — a ground fault indicates actual current flow, while an isolation fault detects reduced insulation resistance." },
+      { question: "Is a SolarEdge ground fault dangerous?", answer: "Yes, ground faults can be a fire and shock hazard. Your inverter shuts down immediately when detected. Do not attempt to restart the system — call a qualified solar technician to diagnose and repair the issue." },
+      { question: "What causes ground faults in solar systems?", answer: "Common causes include water intrusion into wiring or junction boxes, damaged cable insulation from animals or weather, cracked solar panels allowing moisture in, and failing power optimizers with degraded internal insulation." },
+    ],
   },
   {
     slug: "solaredge-night-mode-stuck",
@@ -478,6 +520,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">A system stuck in night mode means zero production. On a typical 8kW system, that's $5-15 per day in lost energy. SolarDoctor's daily health score will catch this immediately and alert you, rather than waiting until your next electricity bill reveals the problem.</p>
     `,
+    faqs: [
+      { question: "Why is my SolarEdge inverter stuck in night mode?", answer: "If your SolarEdge inverter shows night mode during daylight hours, it's not receiving enough DC voltage from the panels to start up. This could indicate a tripped DC disconnect, blown fuse, failed optimizer, or wiring issue preventing power from reaching the inverter." },
+      { question: "How do I get my SolarEdge out of night mode?", answer: "First check that the DC disconnect switch near your inverter is in the ON position. Check your breaker panel for any tripped breakers. If both are fine, the issue likely requires a technician to diagnose failed optimizers or wiring problems." },
+      { question: "Does SolarEdge inverter turn off at night?", answer: "Yes, it's normal for SolarEdge inverters to enter night mode after sunset. The inverter automatically wakes up when solar panels produce enough voltage at sunrise. Night mode only during daytime indicates a problem." },
+    ],
   },
   {
     slug: "solaredge-relay-fault",
@@ -510,6 +557,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">While a relay fault requires professional repair, catching it early minimizes your production losses. SolarDoctor monitors your system's health score daily, so you'll know something is wrong within 24 hours — not when your next electric bill arrives weeks later.</p>
     `,
+    faqs: [
+      { question: "What is a relay fault on a SolarEdge inverter?", answer: "A relay fault means the internal relay that connects your inverter to the grid has failed or is not operating correctly. The relay is a safety device that disconnects your system from the grid during power outages or faults." },
+      { question: "Can a SolarEdge relay fault be repaired?", answer: "Relay faults typically require inverter repair or replacement, as the relay is an internal component. If your inverter is under warranty (typically 12-25 years), SolarEdge may replace it at no cost." },
+      { question: "How much does it cost to replace a SolarEdge inverter?", answer: "A new SolarEdge inverter costs $1,000-$2,500 depending on the model and size. Installation labor adds $300-$500. Check your warranty first — most SolarEdge inverters have a 12-year standard warranty, extendable to 25 years." },
+    ],
   },
   {
     slug: "solaredge-rapid-shutdown-error",
@@ -547,6 +599,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor monitors your system's overall health and alerts you to any production anomalies. While we can't detect RSD-specific errors, our health score will flag any production drops that result from related issues.</p>
     `,
+    faqs: [
+      { question: "What is rapid shutdown on a SolarEdge system?", answer: "Rapid shutdown is a safety feature required by electrical code (NEC 2017/2020) that quickly reduces rooftop voltage to safe levels when the system is turned off. SolarEdge power optimizers provide module-level rapid shutdown compliance." },
+      { question: "Why is my SolarEdge showing a rapid shutdown error?", answer: "A rapid shutdown error typically means one or more power optimizers are not responding to the shutdown signal. This could be caused by a failed optimizer, communication issue, or wiring problem between the inverter and optimizers." },
+      { question: "Is rapid shutdown error dangerous?", answer: "The rapid shutdown system exists to protect firefighters and maintenance workers. If it's not functioning, rooftop DC voltage may remain dangerously high even when the system is turned off. Have it repaired promptly." },
+    ],
   },
 
   // ============================================================
@@ -590,6 +647,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor compares your system's total production against expected output, so even if individual microinverters lose communication, you'll see any real production drops reflected in your health score.</p>
     `,
+    faqs: [
+      { question: "Why is my Enphase microinverter not reporting?", answer: "The most common cause is a communication issue between the microinverter and your Envoy/IQ Gateway. This can be caused by power line noise, distance from the gateway, a failed microinverter, or a tripped circuit breaker." },
+      { question: "Is my Enphase microinverter still producing if not reporting?", answer: "Possibly. A communication failure means the gateway can't see the microinverter, but the microinverter may still be converting DC to AC normally. However, a failed microinverter would also show as not reporting." },
+      { question: "How do I fix an Enphase microinverter not reporting?", answer: "Try power cycling your Envoy/IQ Gateway first. If that doesn't work, check if the circuit breaker for the affected panels is tripped. You may need an Enphase technician to test the specific microinverter on the roof." },
+    ],
   },
   {
     slug: "enphase-ac-voltage-out-of-range",
@@ -624,6 +686,11 @@ export const blogPosts: BlogPost[] = [
       <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">How Much Production Are You Losing?</h2>
       <p class="mb-4">ACVOOR errors typically occur during peak solar hours — exactly when your system should be producing the most. Even 1-2 hours of shutdown per day during peak production can cost you 15-25% of your daily output. SolarDoctor's health score makes this impact clearly visible, giving you data to take to your utility.</p>
     `,
+    faqs: [
+      { question: "What does Enphase AC voltage out of range mean?", answer: "It means the grid voltage at your home is outside the safe operating range for your Enphase microinverters (typically 211-264V). The microinverters shut down to protect themselves and the grid." },
+      { question: "Why is my Enphase system showing high voltage?", answer: "High grid voltage is usually caused by your utility's distribution voltage being elevated, multiple solar systems exporting on the same transformer, or loose electrical connections in your home's wiring." },
+      { question: "How do I fix Enphase voltage errors?", answer: "Contact your utility company to report voltage issues. An electrician should check your home's electrical panel connections. Enphase microinverters can sometimes be re-profiled to accept a wider voltage range, but this requires Enphase support." },
+    ],
   },
   {
     slug: "enphase-gfi-tripped",
@@ -657,6 +724,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">Ground faults shut down individual microinverters, so your system still produces power from the other panels. But each offline microinverter represents lost production. SolarDoctor's health score will reflect this drop, alerting you that your system isn't performing at full capacity.</p>
     `,
+    faqs: [
+      { question: "What does GFI tripped mean on Enphase?", answer: "GFI (Ground Fault Interrupter) tripped means your Enphase system detected current leaking to ground. This is a safety feature that shuts down the system to prevent shock or fire hazards." },
+      { question: "How do I reset an Enphase GFI fault?", answer: "You can try resetting by power cycling your Envoy/IQ Gateway. However, if the GFI keeps tripping, there's an underlying issue — likely moisture intrusion, damaged wiring, or a failing microinverter — that needs professional diagnosis." },
+      { question: "Is an Enphase GFI fault dangerous?", answer: "A GFI trip indicates current flowing where it shouldn't, which can be a shock or fire hazard. While the safety system is doing its job by shutting down, the root cause should be diagnosed and repaired by a qualified technician." },
+    ],
   },
   {
     slug: "enphase-over-temperature",
@@ -686,6 +758,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor's health score accounts for weather conditions, so it can distinguish between normal seasonal variation and abnormal performance. If your summer scores are consistently low, it may be time for an inspection.</p>
     `,
+    faqs: [
+      { question: "What temperature do Enphase microinverters shut down?", answer: "Enphase microinverters begin derating power output around 65°C (149°F) and will shut down at approximately 85°C (185°F). Since they're mounted behind solar panels, roof temperatures directly affect them." },
+      { question: "How do I cool down my Enphase microinverters?", answer: "Ensure adequate airflow under the panels — at least 3-4 inches of clearance between panels and roof. There's no way to actively cool microinverters, but they should restart automatically once they cool to safe temperatures." },
+      { question: "Is Enphase over-temperature a sign of failure?", answer: "Occasional temperature shutdowns on extremely hot days are normal. However, frequent shutdowns or shutdowns on moderate days may indicate a failing microinverter, poor installation with inadequate ventilation, or unusual heat buildup." },
+    ],
   },
   {
     slug: "enphase-dc-voltage-low",
@@ -717,6 +794,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor monitors your system's overall health score. If "DC Too Low" errors are affecting your total production, you'll see it reflected in a declining score — helping you identify when a simple sunrise message becomes a real issue.</p>
     `,
+    faqs: [
+      { question: "What causes low DC voltage on Enphase microinverters?", answer: "Low DC voltage typically means the solar panel connected to that microinverter isn't producing enough power. Common causes include heavy shading, a cracked or degraded panel, dirty panels, or wiring issues between the panel and microinverter." },
+      { question: "Can shading cause Enphase DC voltage low errors?", answer: "Yes. Even partial shading on a single panel can drop its voltage below the microinverter's minimum threshold. Trees, chimneys, or new construction casting shadows are common culprits." },
+      { question: "How do I fix Enphase DC low voltage?", answer: "Check for obvious shading or debris on the affected panel. If the panel is clean and unshaded, the panel itself may be degraded or the wiring connections may be loose. A technician can test the panel's output with a multimeter." },
+    ],
   },
   {
     slug: "enphase-dc-resistance-low",
@@ -754,6 +836,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor tracks each microinverter's contribution to your overall health score. A single offline microinverter might only drop your score a few points, but it's still lost energy and a safety signal worth investigating.</p>
     `,
+    faqs: [
+      { question: "What does DC resistance low mean on Enphase?", answer: "Low DC resistance means the insulation between the DC wiring and ground has degraded. This is similar to an isolation fault and indicates potential current leakage that could be a safety hazard." },
+      { question: "What causes low DC resistance in solar systems?", answer: "The most common cause is moisture intrusion into wiring, connectors, or the solar panel itself. Damaged cable insulation from animals, weather, or UV degradation can also reduce resistance over time." },
+      { question: "Is low DC resistance dangerous?", answer: "Yes, low insulation resistance can lead to ground faults, which pose shock and fire risks. The microinverter shuts down as a safety measure. Have a qualified technician diagnose the specific panel and wiring causing the issue." },
+    ],
   },
   {
     slug: "enphase-no-grid-detected",
@@ -787,6 +874,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">Grid loss means zero solar production. For a typical system, every day offline costs $5-15 in lost energy. SolarDoctor's health score will drop to zero when your system isn't producing, alerting you immediately so you can investigate.</p>
     `,
+    faqs: [
+      { question: "Why does my Enphase say no grid detected?", answer: "This means the microinverters cannot detect a stable grid connection. Causes include a power outage, tripped breaker, blown fuse, loose wiring, or the utility performing maintenance. Without grid, the system cannot export power." },
+      { question: "Can Enphase work without grid power?", answer: "Standard Enphase microinverter systems require grid power to operate and will shut down during outages. If you have an Enphase IQ Battery and Enphase System Controller, you can operate in backup mode during outages." },
+      { question: "How do I fix Enphase no grid detected?", answer: "First check if your area is experiencing a power outage. Check your electrical panel for tripped breakers. If the grid is up and breakers are fine, the issue may be a loose connection at the panel or meter — call an electrician." },
+    ],
   },
   {
     slug: "enphase-gateway-not-reporting",
@@ -819,6 +911,11 @@ export const blogPosts: BlogPost[] = [
       <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">The Real Risk of Losing Monitoring</h2>
       <p class="mb-4">Your system produces power without monitoring. But if a microinverter fails while your Gateway is offline, you have no way of knowing. By the time monitoring is restored and you discover the issue, weeks of production may have been lost. This is why keeping your Gateway online matters — it's your window into your solar investment's health.</p>
     `,
+    faqs: [
+      { question: "Why is my Enphase Envoy/Gateway not reporting?", answer: "The gateway may have lost its internet connection (WiFi or Ethernet), lost power, or experienced a firmware issue. Check that the gateway has power and its LED indicators show normal status." },
+      { question: "How do I reconnect my Enphase Envoy to WiFi?", answer: "Access the Envoy's local interface by connecting to its WiFi hotspot (AP mode), or connect a computer via Ethernet. Navigate to the network settings and re-enter your WiFi credentials. You can also use the Enphase Installer Toolkit app." },
+      { question: "Does my Enphase system work if the gateway is offline?", answer: "Yes, your microinverters continue producing electricity even if the gateway is offline. The gateway is only needed for monitoring and communication — it doesn't control the microinverters' operation." },
+    ],
   },
   {
     slug: "enphase-led-status-lights",
@@ -863,6 +960,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">Most homeowners can't easily check LED lights on their roof. That's why remote monitoring is essential. SolarDoctor tracks your system's overall performance and alerts you to any drops — no ladder required.</p>
     `,
+    faqs: [
+      { question: "What do the LED lights on my Enphase Envoy mean?", answer: "Green solid means normal operation. Green flashing means the system is producing power. Orange indicates a condition that needs attention. Red means a critical issue requiring immediate service. Check the Enphase app for detailed status." },
+      { question: "Why is my Enphase Envoy flashing red?", answer: "A red LED indicates a critical fault such as a ground fault, grid voltage issue, or hardware failure. Check the Enphase Enlighten app or Installer Toolkit for the specific error code and contact a qualified technician." },
+      { question: "What does orange light on Enphase mean?", answer: "An orange LED typically indicates a non-critical issue like one microinverter not communicating, a firmware update available, or a minor grid condition. The system is usually still producing but something needs attention." },
+    ],
   },
   {
     slug: "enphase-ac-frequency-out-of-range",
@@ -896,6 +998,11 @@ export const blogPosts: BlogPost[] = [
 
       <p class="mb-4">SolarDoctor's health score helps you quantify the impact of grid issues on your solar production. If ACFOOR events are costing you significant energy, your declining health score gives you concrete data to share with your utility company.</p>
     `,
+    faqs: [
+      { question: "What does AC frequency out of range mean on Enphase?", answer: "It means the grid frequency has deviated from the standard 60Hz (US) or 50Hz (other regions) beyond acceptable limits. Your microinverters disconnect from the grid as a safety measure to prevent damage to appliances and the grid itself." },
+      { question: "What causes grid frequency problems?", answer: "Grid frequency issues are caused by imbalances between electricity supply and demand on the utility grid. They're rare in developed grids but can occur during major grid events, storms, or equipment failures at utility substations." },
+      { question: "How long does an AC frequency fault last?", answer: "Most frequency events are brief (seconds to minutes) and the microinverters automatically reconnect once frequency stabilizes. If the error persists for hours, contact your utility to report the issue." },
+    ],
   },
 ];
 
