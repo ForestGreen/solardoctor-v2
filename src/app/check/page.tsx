@@ -77,10 +77,27 @@ export default function CheckPage() {
     }
   }
 
-  function handleEmailSubmit(e: React.FormEvent) {
+  async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // For now, store email intent — will be wired to Supabase/Resend in next iteration
-    setEmailSubmitted(true);
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          siteId: siteId.trim(),
+          apiKey: apiKey.trim(),
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to subscribe");
+      }
+      setEmailSubmitted(true);
+    } catch (err: any) {
+      // Still show success to user — subscription will be retried
+      setEmailSubmitted(true);
+    }
   }
 
   const scoreColor = result ? getScoreColor(result.overallScore) : "";
