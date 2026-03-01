@@ -315,7 +315,7 @@ function generateCityBlogPost(city: CityData, index: number): BlogPost {
     <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">Local Weather and Climate Factors in ${city.cityName}</h2>
     ${localConcerns}
 
-    <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">${city.utility ? `Common Issues for ${city.cityName} Solar Owners with ${city.primaryUtility}` : `Common Issues for ${city.cityName} Solar Owners`}</h2>
+    <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">${city.primaryUtility ? `Common Issues for ${city.cityName} Solar Owners with ${city.primaryUtility}` : `Common Issues for ${city.cityName} Solar Owners`}</h2>
     <p class="mb-4">In ${city.cityName}, we see several recurring problems that cost homeowners money:</p>
     <ul class="list-disc pl-6 mb-4 space-y-2">
       <li><strong>Seasonal production variance.</strong> Your winter production in ${city.cityName} may be 40-60% lower than summer. If you're comparing all months equally, you might think something's broken when it's actually normal.</li>
