@@ -206,11 +206,11 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
 // Get 2-4 related posts based on category match
 function getRelatedPosts(currentSlug: string, category: string) {
-  const { blogPosts } = require("@/lib/blog-posts");
-  const sameCat = blogPosts.filter(
+  const { allBlogPosts } = require("@/lib/blog-posts");
+  const sameCat = allBlogPosts.filter(
     (p: any) => p.slug !== currentSlug && p.category === category
   );
-  const otherPosts = blogPosts.filter(
+  const otherPosts = allBlogPosts.filter(
     (p: any) => p.slug !== currentSlug && p.category !== category
   );
   const related = [...sameCat.slice(0, 3), ...otherPosts.slice(0, 2)];

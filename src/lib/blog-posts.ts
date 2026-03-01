@@ -1006,13 +1006,26 @@ export const blogPosts: BlogPost[] = [
   },
 ];
 
+// Import programmatic SEO posts
+import { cityBlogPosts } from './blog-posts-cities';
+import { installerBlogPosts } from './blog-posts-installers';
+import { problemBlogPosts } from './blog-posts-problems';
+
+// Merge all blog posts into a single array
+export const allBlogPosts: BlogPost[] = [
+  ...blogPosts,
+  ...problemBlogPosts,
+  ...installerBlogPosts,
+  ...cityBlogPosts,
+];
+
 // Create a lookup map for quick access by slug
 export const blogPostsBySlug: Record<string, BlogPost> = {};
-blogPosts.forEach((post) => {
+allBlogPosts.forEach((post) => {
   blogPostsBySlug[post.slug] = post;
 });
 
 // Get all slugs for static generation
 export function getAllSlugs(): string[] {
-  return blogPosts.map((post) => post.slug);
+  return allBlogPosts.map((post) => post.slug);
 }
