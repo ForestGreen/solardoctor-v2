@@ -1,69 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { blogPosts } from "@/lib/blog-posts";
 
 export const metadata: Metadata = {
   title: "Solar Doctor Blog - Solar System Monitoring Tips & Guides",
   description:
-    "Expert guides on solar panel monitoring, troubleshooting underperforming systems, understanding SolarEdge error codes, and maximizing your solar investment.",
+    "Expert guides on solar panel monitoring, troubleshooting SolarEdge and Enphase error codes, and maximizing your solar investment.",
 };
-
-// Static blog posts for SEO - these will drive organic traffic
-const posts = [
-  {
-    slug: "is-my-solar-system-working",
-    title: "Is My Solar System Actually Working? 5 Signs It's Not",
-    excerpt:
-      "Most homeowners have no idea their solar panels are underperforming. Here are the warning signs you're losing money every month.",
-    category: "Monitoring",
-    date: "2025-03-01",
-    readTime: "6 min read",
-  },
-  {
-    slug: "solar-installer-went-out-of-business",
-    title: "My Solar Installer Went Out of Business - Now What?",
-    excerpt:
-      "Over 100 solar companies filed for bankruptcy in 2024. If your installer is gone, here's how to keep your system running and monitored.",
-    category: "Solar Orphans",
-    date: "2025-02-15",
-    readTime: "8 min read",
-  },
-  {
-    slug: "solaredge-error-codes-explained",
-    title: "SolarEdge Error Codes Explained in Plain English",
-    excerpt:
-      "A homeowner-friendly guide to every SolarEdge inverter error code, what they mean, and what to do about them.",
-    category: "Troubleshooting",
-    date: "2025-02-01",
-    readTime: "10 min read",
-  },
-  {
-    slug: "how-much-should-solar-panels-produce",
-    title: "How Much Should My Solar Panels Produce Each Month?",
-    excerpt:
-      "Your system size, location, and time of year all affect production. Here's how to calculate if you're getting what you paid for.",
-    category: "Education",
-    date: "2025-01-15",
-    readTime: "5 min read",
-  },
-  {
-    slug: "solar-panel-cleaning-worth-it",
-    title: "Is Solar Panel Cleaning Worth It? What the Data Says",
-    excerpt:
-      "Dirty panels can lose 5-25% of their output. We break down when cleaning makes financial sense and when it doesn't.",
-    category: "Maintenance",
-    date: "2025-01-01",
-    readTime: "4 min read",
-  },
-  {
-    slug: "solar-monitoring-apps-compared",
-    title: "Solar Monitoring Apps Compared: SolarEdge vs Enphase vs SolarDoctor",
-    excerpt:
-      "Inverter apps show you data. SolarDoctor tells you what that data means. Here's how they differ.",
-    category: "Comparison",
-    date: "2024-12-15",
-    readTime: "7 min read",
-  },
-];
 
 export default function BlogPage() {
   return (
@@ -100,10 +43,24 @@ export default function BlogPage() {
         </p>
       </div>
 
+      {/* Category filters */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="flex flex-wrap gap-2">
+          {Array.from(new Set(blogPosts.map((p) => p.category))).map((cat) => (
+            <span
+              key={cat}
+              className="text-xs font-medium px-3 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-100"
+            >
+              {cat}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Posts grid */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid gap-8">
-          {posts.map((post) => (
+          {blogPosts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
