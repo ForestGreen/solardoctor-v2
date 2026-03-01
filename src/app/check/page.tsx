@@ -55,12 +55,25 @@ export default function CheckPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
 
+  // Lightweight event tracking (fire-and-forget)
+  function trackEvent(eventName: string, properties?: Record<string, any>) {
+    try {
+      fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventName, properties }),
+      }).catch(() => {});
+    } catch {}
+  }
+
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
     setReportUrl(null);
+
+    trackEvent("check_started", { brand, hasSiteId: !!siteId.trim(), hasApiKey: !!apiKey.trim() });
 
     try {
       if (brand === "enphase") {
@@ -82,6 +95,7 @@ export default function CheckPage() {
       }
 
       setResult(data);
+      trackEvent("check_completed", { score: data.overallScore, status: data.overallStatus, location: data.location });
 
       // Save report for sharing (fire and forget)
       try {
@@ -107,6 +121,7 @@ export default function CheckPage() {
 
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
+      trackEvent("check_error", { error: err.message, brand });
     } finally {
       setLoading(false);
     }
@@ -129,6 +144,7 @@ export default function CheckPage() {
         throw new Error(data.error || "Failed to subscribe");
       }
       setEmailSubmitted(true);
+      trackEvent("email_subscribed", { source: "check_results" });
     } catch (err: any) {
       setEmailSubmitted(true);
     }
@@ -136,6 +152,7 @@ export default function CheckPage() {
 
   async function copyShareLink() {
     if (!reportUrl) return;
+    trackEvent("report_shared", { method: "copy_link" });
     try {
       await navigator.clipboard.writeText(reportUrl);
       setLinkCopied(true);
@@ -280,7 +297,7 @@ export default function CheckPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowWalkthrough(!showWalkthrough)}
+                      onClick={() => { if (!showWalkthrough) trackEvent("walkthrough_opened"); setShowWalkthrough(!showWalkthrough); }}
                       className="text-xs text-green-600 hover:text-green-700 mt-1 underline"
                     >
                       {showWalkthrough ? "Hide instructions" : "Where do I find this?"}
@@ -389,6 +406,7 @@ export default function CheckPage() {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ email: email.trim(), siteId: "enphase-waitlist", apiKey: "pending" }),
                           });
+                          trackEvent("enphase_waitlist", { email: email.trim() });
                           setEmailSubmitted(true);
                         }
                       }}
@@ -524,6 +542,7 @@ export default function CheckPage() {
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(reportUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackEvent("report_shared", { method: "facebook" })}
                       className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700"
                     >
                       Facebook
@@ -532,6 +551,7 @@ export default function CheckPage() {
                       href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`My solar system scored ${Math.round(result.overallScore)}/100 on SolarDoctor! ${STATUS_CONFIG[result.overallStatus].emoji} Check yours free:`)}&url=${encodeURIComponent(reportUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackEvent("report_shared", { method: "twitter" })}
                       className="bg-sky-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-sky-600"
                     >
                       X / Twitter

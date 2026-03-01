@@ -46,5 +46,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
+  // Note: /report/[id] pages are dynamic and will be discovered by crawlers
+  // via share links. We don't include them in the sitemap since they're
+  // user-generated and could number in the thousands.
+
   return [...staticPages, ...blogPages];
 }
