@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { allBlogPosts } from "@/lib/blog-posts";
+import { inverterModels } from "@/lib/inverter-models";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.getsolardoctor.com";
@@ -25,6 +26,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/inverters`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/auth`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -46,9 +53,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
+  // Inverter model pages
+  const inverterPages: MetadataRoute.Sitemap = inverterModels.map((model) => ({
+    url: `${baseUrl}/inverters/${model.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   // Note: /report/[id] pages are dynamic and will be discovered by crawlers
   // via share links. We don't include them in the sitemap since they're
   // user-generated and could number in the thousands.
 
-  return [...staticPages, ...blogPages];
+  return [...staticPages, ...blogPages, ...inverterPages];
 }

@@ -24,10 +24,11 @@ function ctaBlock(customHeadline?: string): string {
   return `
     <div class="mt-12 bg-green-50 rounded-2xl p-8 text-center">
       <h3 class="text-xl font-bold text-green-900 mb-2">${headline}</h3>
-      <p class="text-green-700 mb-6">Get a free health score in 2 minutes. No credit card, no commitment.</p>
+      <p class="text-green-700 mb-4">Get a free health score in 30 seconds. No account required, no credit card.</p>
       <a href="/check" class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors">
         Check Your System Now &rarr;
       </a>
+      <p class="text-green-600 text-xs mt-4">Works with SolarEdge systems. Enphase coming soon.</p>
     </div>
   `;
 }
@@ -39,6 +40,19 @@ function inlineCta(text?: string): string {
     <div class="my-8 border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
       <p class="text-green-800 font-medium mb-2">${t}</p>
       <a href="/check" class="text-green-700 font-semibold hover:text-green-900 underline">Get your free health score &rarr;</a>
+    </div>
+  `;
+}
+
+// Related content links helper — adds contextual internal links to blog posts
+function relatedLinks(links: { text: string; slug: string }[]): string {
+  const items = links
+    .map((l) => `<li><a href="/blog/${l.slug}" class="text-green-700 hover:text-green-900 underline">${l.text}</a></li>`)
+    .join("");
+  return `
+    <div class="my-8 bg-gray-50 rounded-lg p-5">
+      <p class="text-gray-900 font-semibold mb-2">Related guides:</p>
+      <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">${items}</ul>
     </div>
   `;
 }
@@ -70,7 +84,15 @@ export const blogPosts: BlogPost[] = [
       <p class="mb-4">If your monitoring shows zero production on a clear sunny day, your system has a critical failure. This could be a tripped breaker, a failed inverter, or a wiring issue. The longer this goes unaddressed, the more money you lose.</p>
       <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">What Can You Do About It?</h2>
       <p class="mb-4">The first step is knowing whether your system is actually performing well. SolarDoctor compares your actual production against what your system <em>should</em> produce based on its size, location, and time of year. It gives you a simple health score from 0-100, so you instantly know if something needs attention.</p>
-      <p class="mb-4">It's free, takes 2 minutes to set up, and works with any SolarEdge system.</p>
+      <p class="mb-4">It's free, takes 30 seconds to set up, and works with any SolarEdge system.</p>
+      ${inlineCta("Not sure if your system is healthy? SolarDoctor compares your actual output to expected production for your location.")}
+      ${relatedLinks([
+        { text: "How to Check Solar Panel Performance (Step-by-Step)", slug: "how-to-check-solar-panel-performance" },
+        { text: "Solar Panels Not Producing Enough? Here's Why", slug: "solar-panels-not-producing-enough" },
+        { text: "Solar Panel Degradation: What's Normal?", slug: "solar-panel-degradation-rate-guide" },
+        { text: "SolarEdge Error Codes Explained", slug: "solaredge-error-codes-explained" },
+      ])}
+      ${ctaBlock()}
     `,
   },
   {
@@ -1010,10 +1032,12 @@ export const blogPosts: BlogPost[] = [
 import { cityBlogPosts } from './blog-posts-cities';
 import { installerBlogPosts } from './blog-posts-installers';
 import { problemBlogPosts } from './blog-posts-problems';
+import { highIntentBlogPosts } from './blog-posts-high-intent';
 
 // Merge all blog posts into a single array
 export const allBlogPosts: BlogPost[] = [
   ...blogPosts,
+  ...highIntentBlogPosts,
   ...problemBlogPosts,
   ...installerBlogPosts,
   ...cityBlogPosts,

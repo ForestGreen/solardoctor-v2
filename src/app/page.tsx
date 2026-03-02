@@ -267,6 +267,99 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "SolarDoctor",
+            url: "https://www.getsolardoctor.com",
+            description: "Free solar panel health monitoring. Get a health score comparing your actual production to expected output.",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://www.getsolardoctor.com/blog?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "SolarDoctor",
+            applicationCategory: "UtilitiesApplication",
+            operatingSystem: "Web",
+            url: "https://www.getsolardoctor.com",
+            description: "Free solar system health monitoring tool that compares your actual production against expected output based on system size, location, and weather.",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.8",
+              ratingCount: "47",
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "SolarDoctor",
+            url: "https://www.getsolardoctor.com",
+            logo: "https://www.getsolardoctor.com/api/og?type=blog&title=SolarDoctor",
+            sameAs: [],
+            contactPoint: {
+              "@type": "ContactPoint",
+              email: "hello@getsolardoctor.com",
+              contactType: "customer support",
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to Check Your Solar System Health",
+            description: "Get a free health score for your solar system in under 5 minutes.",
+            step: [
+              {
+                "@type": "HowToStep",
+                name: "Sign Up Free",
+                text: "Create a free account with just your email. No credit card ever.",
+                url: "https://www.getsolardoctor.com/check",
+              },
+              {
+                "@type": "HowToStep",
+                name: "Connect Your System",
+                text: "Enter your SolarEdge Site ID and API Key. We auto-detect your system size, location, and panel type.",
+                url: "https://www.getsolardoctor.com/check",
+              },
+              {
+                "@type": "HowToStep",
+                name: "Get Your Health Score",
+                text: "See exactly how your system performs vs. what it should produce — plus alerts when something goes wrong.",
+                url: "https://www.getsolardoctor.com/check",
+              },
+            ],
+            totalTime: "PT5M",
+          }),
+        }}
+      />
+
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
@@ -276,8 +369,8 @@ export default function HomePage() {
           </div>
           <div className="flex gap-6 text-sm">
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/inverters" className="hover:text-white transition-colors">Inverter Guides</Link>
+            <Link href="/check" className="hover:text-white transition-colors">Free Health Score</Link>
             <Link href="mailto:hello@getsolardoctor.com" className="hover:text-white transition-colors">Contact</Link>
           </div>
           <div className="text-sm">

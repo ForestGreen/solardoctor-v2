@@ -144,11 +144,20 @@ export async function generateMetadata({
       url: `https://www.getsolardoctor.com/report/${params.id}`,
       siteName: "SolarDoctor",
       type: "article",
+      images: [
+        {
+          url: `https://www.getsolardoctor.com/api/og?score=${score}&status=${report.overall_status}&location=${encodeURIComponent(report.location)}&lost=${report.estimated_lost_dollars}`,
+          width: 1200,
+          height: 630,
+          alt: `Solar Health Score: ${score}/100 for ${report.location}`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `Solar Health Score: ${score}/100 ${status.emoji}`,
       description,
+      images: [`https://www.getsolardoctor.com/api/og?score=${score}&status=${report.overall_status}&location=${encodeURIComponent(report.location)}&lost=${report.estimated_lost_dollars}`],
     },
   };
 }
