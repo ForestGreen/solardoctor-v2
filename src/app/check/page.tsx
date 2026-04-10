@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { trackEvent } from "@/lib/tracking";
 import { DEMO_DATA } from "@/lib/demo-data";
+import { SolarEdgeGuide } from "@/components/SolarEdgeGuide";
 
 type HealthStatus =
   | "overperforming"
@@ -410,57 +411,37 @@ export default function CheckPage() {
                 </div>
 
                 {showWalkthrough && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
-                    <p className="text-sm font-semibold text-gray-800">
-                      {brand === "solaredge"
-                        ? "How to find your SolarEdge Site ID & API Key"
-                        : "How to use the Enphase beta flow"}
-                    </p>
-                    <div className="space-y-4 text-sm text-gray-700">
-                      {brand === "solaredge" ? (
-                        <>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="font-medium text-gray-900 mb-1">Step 1: Find your Site ID</p>
-                            <p>Go to <a href="https://monitoring.solaredge.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">monitoring.solaredge.com</a> and log in. Your Site ID is the number in the URL after you log in — it looks like <code className="bg-gray-200 px-1 rounded text-xs">1234567</code>.</p>
-                            <p className="text-xs text-gray-500 mt-1">Example URL: monitoring.solaredge.com/solaredge-web/p/site/<strong>1234567</strong>/...</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="font-medium text-gray-900 mb-1">Step 2: Get your API Key</p>
-                            <p>In the SolarEdge portal, click <strong>Admin</strong> (top menu) &rarr; <strong>Site Access</strong> &rarr; <strong>API Access</strong>.</p>
-                            <p className="mt-1">If API Access is enabled, you&apos;ll see your key. If not, check the box to enable it, then copy the key that appears.</p>
-                            <p className="text-xs text-gray-500 mt-1">The key looks like: <code className="bg-gray-200 px-1 rounded">AEME1A9NVQ...</code> (about 32 characters)</p>
-                          </div>
-                          <div className="bg-amber-50 rounded-lg p-3">
-                            <p className="font-medium text-amber-900 mb-1">Don&apos;t have portal access?</p>
-                            <p className="text-amber-800">If you can&apos;t log into the SolarEdge portal, your installer may not have given you access. You can:</p>
-                            <ul className="list-disc ml-4 mt-1 space-y-1 text-amber-800">
-                              <li>Ask your installer to enable your portal account</li>
-                              <li>Contact SolarEdge support at <a href="https://www.solaredge.com/service/support" target="_blank" rel="noopener noreferrer" className="underline">solaredge.com/support</a></li>
-                              <li>Check your installation paperwork — some installers include the Site ID</li>
-                            </ul>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="font-medium text-gray-900 mb-1">Step 1: Get your Enphase access token</p>
-                            <p>You&apos;ll need an active Enphase API access token from your developer or homeowner account workflow.</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="font-medium text-gray-900 mb-1">Step 2: Find your System ID</p>
-                            <p>Your System ID is visible in the Enlighten app or at <a href="https://enlighten.enphaseenergy.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">enlighten.enphaseenergy.com</a>.</p>
-                          </div>
-                          <div className="bg-blue-50 rounded-lg p-3 text-blue-800">
-                            <p className="font-medium mb-1">Enphase OAuth coming soon</p>
-                            <p className="text-xs">We&apos;re working on a simpler flow where you just log in with your Enphase account — no tokens needed. For now, the beta requires a developer access token.</p>
-                          </div>
-                        </>
-                      )}
+                  brand === "solaredge" ? (
+                    <SolarEdgeGuide onClose={() => setShowWalkthrough(false)} />
+                  ) : (
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-800">How to connect your Enphase system</p>
+                        <button onClick={() => setShowWalkthrough(false)} className="text-gray-400 hover:text-gray-600 text-sm">Hide</button>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <p className="text-sm font-medium text-green-900 mb-2">Recommended: Use Enphase OAuth</p>
+                        <p className="text-xs text-green-700 mb-3">Click the &quot;Connect with Enphase Account&quot; button above. You&apos;ll log in on Enphase&apos;s site and authorize SolarDoctor — no tokens or API keys needed.</p>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                        <div className="relative flex justify-center text-xs"><span className="px-2 bg-white text-gray-400">or use manual token flow</span></div>
+                      </div>
+                      <div className="space-y-3 text-sm text-gray-700">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="font-medium text-gray-900 mb-1">Step 1: Get your Enphase access token</p>
+                          <p>You&apos;ll need an active Enphase API access token from your developer or homeowner account workflow.</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="font-medium text-gray-900 mb-1">Step 2: Find your System ID</p>
+                          <p>Your System ID is visible in the Enlighten app or at <a href="https://enlighten.enphaseenergy.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">enlighten.enphaseenergy.com</a>.</p>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+                        <strong>Your data is stored to power ongoing monitoring.</strong> We keep your credential on file so we can run future checks and alerts for you.
+                      </div>
                     </div>
-                    <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
-                      <strong>Your data is stored to power ongoing monitoring.</strong> We keep your credential on file so we can run future checks and alerts for you.
-                    </div>
-                  </div>
+                  )
                 )}
 
                 <button
