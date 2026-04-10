@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateCredentials } from "@/lib/solaredge";
+import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/solaredge/validate
@@ -10,6 +11,15 @@ import { validateCredentials } from "@/lib/solaredge";
  */
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const { success } = rateLimit(`validate-se:${ip}`, { maxRequests: 10, windowMs: 60_000 });
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please wait a minute before trying again." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const { siteId, apiKey } = await request.json();
 
     if (!siteId || !apiKey) {

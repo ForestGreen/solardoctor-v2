@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { trackEvent } from "@/lib/tracking";
 import { DEMO_DATA } from "@/lib/demo-data";
 
@@ -66,6 +67,58 @@ export default function CheckPage() {
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  // Handle Enphase OAuth callback redirect
+  useEffect(() => {
+    const enphaseConnected = searchParams.get("enphase");
+    const oauthSystemId = searchParams.get("systemId");
+    const oauthError = searchParams.get("error");
+
+    if (oauthError) {
+      const errorMessages: Record<string, string> = {
+        enphase_denied: "You declined the Enphase authorization. You can try again or use the manual token flow.",
+        enphase_failed: "Something went wrong connecting to Enphase. Please try again.",
+        enphase_not_configured: "Enphase OAuth is not available yet. Please use the manual token flow.",
+        no_enphase_systems: "No Enphase systems were found on your account.",
+        missing_code: "The Enphase authorization was incomplete. Please try again.",
+        invalid_state: "The authorization session expired. Please try again.",
+      };
+      setError(errorMessages[oauthError] || "Something went wrong. Please try again.");
+      setBrand("enphase");
+      return;
+    }
+
+    if (enphaseConnected === "connected" && oauthSystemId) {
+      setBrand("enphase");
+      setLoading(true);
+      trackEvent("enphase_oauth_completed", { systemId: oauthSystemId });
+
+      // Fetch health score using the cookie-stored access token
+      fetch(`/api/health-score/preview?systemId=${oauthSystemId}`)
+        .then(async (res) => {
+          if (!res.ok) {
+            const body = await res.json();
+            throw new Error(body.error || "Failed to fetch health score");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setResult(data);
+          trackEvent("check_completed", {
+            brand: "enphase",
+            score: data.overallScore,
+            status: data.overallStatus,
+            source: "oauth",
+          });
+        })
+        .catch((err) => {
+          setError(err.message || "Failed to fetch health score after Enphase connection.");
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [searchParams]);
 
   const credentialLabel = brand === "solaredge" ? "SolarEdge API Key" : "Enphase Access Token";
   const idLabel = brand === "solaredge" ? "SolarEdge Site ID" : "Enphase System ID";
@@ -157,8 +210,8 @@ export default function CheckPage() {
       }
       setEmailSubmitted(true);
       trackEvent("alert_signup", { source: "check_results", brand });
-    } catch {
-      setEmailSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to set up alerts. Please try again.");
     }
   }
 
@@ -579,6 +632,29 @@ export default function CheckPage() {
                 <p className="text-sm text-green-600 mt-1">Check your email for a confirmation.</p>
               </div>
             )}
+
+            {/* Account bridge CTA */}
+            <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6 text-center mb-8">
+              <h3 className="text-lg font-bold text-brand-900 mb-2">
+                Want ongoing monitoring?
+              </h3>
+              <p className="text-sm text-brand-700 mb-4">
+                Create a free account and we&apos;ll save this system so you get automatic health checks and alerts.
+              </p>
+              <Link
+                href="/auth"
+                onClick={() => {
+                  // Save credentials to sessionStorage for pre-fill on dashboard/connect
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("sd_prefill", JSON.stringify({ brand, siteId, apiKey }));
+                  }
+                  trackEvent("account_bridge_click", { source: "check_results", brand, score: result.overallScore });
+                }}
+                className="inline-flex items-center px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium transition-colors"
+              >
+                Create Free Account
+              </Link>
+            </div>
 
             <div className="text-center">
               <button

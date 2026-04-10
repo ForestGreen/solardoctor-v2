@@ -8,12 +8,16 @@ export async function GET(request: NextRequest) {
     const supabase = createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Validate returnTo against allowlist to prevent open redirect
+    const ALLOWED_RETURN_PATHS = ["/dashboard", "/check", "/dashboard/connect"];
+    const rawReturnTo = request.nextUrl.searchParams.get("returnTo") || "/dashboard";
+    const returnTo = ALLOWED_RETURN_PATHS.includes(rawReturnTo) ? rawReturnTo : "/dashboard";
+
     // Generate a CSRF-safe state parameter
-    // Include user ID if logged in, so we can link the tokens after callback
     const state = JSON.stringify({
       nonce: nanoid(),
       userId: user?.id || null,
-      returnTo: request.nextUrl.searchParams.get("returnTo") || "/dashboard",
+      returnTo,
     });
 
     // Base64 encode the state for URL safety

@@ -49,14 +49,8 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Subscription error:", error);
-      // If table doesn't exist yet, still return success to not break the UX
-      // The table will be created when we set up the cron job
-      if (error.code === "42P01") {
-        console.log("email_subscriptions table does not exist yet — will be created during setup");
-        return NextResponse.json({ success: true, message: "Subscription recorded" });
-      }
       return NextResponse.json(
-        { error: "Failed to save subscription" },
+        { error: "Failed to save subscription. Please try again." },
         { status: 500 }
       );
     }
