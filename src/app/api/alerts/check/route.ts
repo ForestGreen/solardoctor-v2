@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getSystemDataForHealthScore } from "@/lib/solaredge";
 import { getExpectedMonthlyKwh } from "@/lib/pvwatts";
 import { buildHealthSummary, checkForAlerts } from "@/lib/health-score";
+import { decryptCredential } from "@/lib/crypto";
 
 /**
  * POST /api/alerts/check
@@ -45,8 +46,9 @@ export async function POST(request: NextRequest) {
     for (const system of systems || []) {
       try {
         // Get actual production from SolarEdge
+        const decryptedKey = decryptCredential(system.api_key);
         const { details, overview, monthlyEnergy } =
-          await getSystemDataForHealthScore(system.site_id, system.api_key);
+          await getSystemDataForHealthScore(system.site_id, decryptedKey);
 
         // Get expected production from PVWatts
         const lat = system.latitude ?? details.location.latitude;

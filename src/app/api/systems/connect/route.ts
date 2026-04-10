@@ -71,6 +71,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-subscribe the user to weekly digest emails
+    // Uses service role to bypass RLS for the email_subscriptions table
+    try {
+      const { createServiceRoleClient: createSvcClient } = await import("@/lib/supabase/server");
+      const svcSupabase = createSvcClient();
+      await svcSupabase
+        .from("email_subscriptions")
+        .upsert(
+          {
+            email: user.email!.toLowerCase(),
+            site_id: siteId,
+            api_key: encryptCredential(apiKey),
+            subscribed: true,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "email,site_id" }
+        );
+    } catch (subError) {
+      // Non-fatal: system is connected even if subscription fails
+      console.warn("Failed to auto-subscribe for digest:", subError);
+    }
+
     return NextResponse.json({
       success: true,
       system: data,
