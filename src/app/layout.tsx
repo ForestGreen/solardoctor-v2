@@ -6,6 +6,7 @@ import { FunnelTracker } from "@/components/FunnelTracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.getsolardoctor.com"),
   title: "SolarDoctor - Know When Your Solar Investment Stops Working",
   description:
     "Free monitoring alerts and health scores for your rooftop solar system. Catch problems before they cost you thousands in lost savings.",
@@ -19,6 +20,9 @@ export const metadata: Metadata = {
     "solar orphan",
     "rooftop solar",
   ],
+  alternates: {
+    canonical: "https://www.getsolardoctor.com",
+  },
   verification: {
     google: "IRXXsKmHpSjyv_b_cFO6zyQ56GbVj_4opp-Lh5GnmPc",
   },
@@ -26,7 +30,7 @@ export const metadata: Metadata = {
     title: "SolarDoctor - The Doctor Is In",
     description:
       "Free health scores and alerts for your rooftop solar system. Know when your investment stops generating returns.",
-    url: "https://getsolardoctor.com",
+    url: "https://www.getsolardoctor.com",
     siteName: "SolarDoctor",
     type: "website",
   },
