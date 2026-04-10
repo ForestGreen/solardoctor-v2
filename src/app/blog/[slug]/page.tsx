@@ -88,14 +88,13 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <Link
-            href="/blog"
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            &larr; All posts
-          </Link>
-        </div>
+        <nav className="mb-8 text-sm text-gray-400">
+          <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+          <span className="mx-2">/</span>
+          <Link href="/blog" className="hover:text-gray-600 transition-colors">Blog</Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-600">{post.category}</span>
+        </nav>
 
         <div className="flex items-center gap-3 mb-4">
           <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-50 text-green-700">
@@ -111,9 +110,20 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           <span className="text-xs text-gray-400">{post.readTime}</span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 leading-tight">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">
           {post.title}
         </h1>
+
+        {/* Author E-E-A-T attribution */}
+        <div className="flex items-center gap-3 mb-8 p-4 bg-gray-50 rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+            R
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">Rich</p>
+            <p className="text-xs text-gray-500">Founder, SolarDoctor &middot; 20 years in the solar energy industry</p>
+          </div>
+        </div>
 
         <div
           className="prose prose-gray max-w-none"
@@ -170,7 +180,23 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
       </article>
 
-      {/* Schema.org Article structured data */}
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.getsolardoctor.com" },
+              { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.getsolardoctor.com/blog" },
+              { "@type": "ListItem", position: 3, name: post.title },
+            ],
+          }),
+        }}
+      />
+
+      {/* Schema.org Article structured data with author E-E-A-T */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -180,15 +206,26 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             headline: post.title,
             description: post.metaDescription,
             datePublished: post.date,
+            dateModified: post.date,
             author: {
-              "@type": "Organization",
-              name: "SolarDoctor",
-              url: "https://www.getsolardoctor.com",
+              "@type": "Person",
+              name: "Rich",
+              jobTitle: "Founder & Solar Energy Expert",
+              description: "20-year solar industry veteran and founder of SolarDoctor. Built the tool after discovering his own system had been offline for 8 months.",
+              url: "https://www.getsolardoctor.com/#story",
             },
             publisher: {
               "@type": "Organization",
               name: "SolarDoctor",
               url: "https://www.getsolardoctor.com",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://www.getsolardoctor.com/api/og?type=blog&title=SolarDoctor",
+              },
+            },
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `https://www.getsolardoctor.com/blog/${post.slug}`,
             },
           }),
         }}

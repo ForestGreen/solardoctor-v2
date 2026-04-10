@@ -1035,12 +1035,15 @@ import { problemBlogPosts } from './blog-posts-problems';
 import { highIntentBlogPosts } from './blog-posts-high-intent';
 
 // Merge all blog posts into a single array
+// NOTE: City blog posts intentionally excluded from static generation.
+// 328 templated city pages were triggering Google's Helpful Content filter
+// (thin/duplicate content signal) and suppressing indexing for the entire site.
+// Keep only substantive, original content for SEO health.
 export const allBlogPosts: BlogPost[] = [
   ...blogPosts,
   ...highIntentBlogPosts,
   ...problemBlogPosts,
   ...installerBlogPosts,
-  ...cityBlogPosts,
 ];
 
 // Create a lookup map for quick access by slug
