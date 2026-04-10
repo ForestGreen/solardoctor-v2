@@ -38,7 +38,7 @@ export const highIntentBlogPosts: BlogPost[] = [
   // ============================================================
   {
     slug: "solar-panels-not-producing-enough",
-    title: "Solar Panels Not Producing Enough Energy? Here's Why",
+    title: "Why Are My Solar Panels Not Producing Enough Power?",
     excerpt:
       "If your solar panels produce less energy than expected, it's usually one of a few common causes. Learn how to diagnose the problem and fix it.",
     category: "Troubleshooting",
@@ -569,7 +569,7 @@ export const highIntentBlogPosts: BlogPost[] = [
   // ============================================================
   {
     slug: "best-solar-monitoring-apps",
-    title: "Best Solar Monitoring Apps: SolarEdge vs. Enphase vs. SolarDoctor",
+    title: "Best Free Solar Monitoring Apps (2026 Comparison)",
     excerpt:
       "Not all monitoring apps are equal. Compare SolarEdge, Enphase, SolarDoctor, Solar Analytics, and Sense to find the right one for your needs.",
     category: "Comparison",
@@ -789,7 +789,7 @@ export const highIntentBlogPosts: BlogPost[] = [
   // ============================================================
   {
     slug: "solar-panels-stopped-working",
-    title: "Solar Panels Stopped Working? Emergency Troubleshooting Guide",
+    title: "Solar Panels Stopped Working — What to Do Right Now",
     excerpt:
       "Zero production on sunny days? This emergency troubleshooting guide walks you through diagnosis in 5 minutes, so you know whether to call a technician.",
     category: "Troubleshooting",

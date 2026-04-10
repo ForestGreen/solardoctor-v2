@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.getsolardoctor.com"),
-  title: "SolarDoctor - Know When Your Solar Investment Stops Working",
+  title: "SolarDoctor — Free Solar Panel Health Check & Monitoring",
   description:
     "Free monitoring alerts and health scores for your rooftop solar system. Catch problems before they cost you thousands in lost savings.",
   keywords: [

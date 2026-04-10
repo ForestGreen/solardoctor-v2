@@ -361,10 +361,11 @@ export default function HomePage() {
             <span className="text-white font-bold">SolarDoctor</span>
           </div>
           <div className="flex gap-6 text-sm">
+            <Link href="/check" className="hover:text-white transition-colors">Free Health Check</Link>
+            <Link href="/tools/solar-production-calculator" className="hover:text-white transition-colors">Production Calculator</Link>
+            <Link href="/guides/electric-bill-high-with-solar" className="hover:text-white transition-colors">High Electric Bill?</Link>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/inverters" className="hover:text-white transition-colors">Inverter Guides</Link>
             <Link href="/solar-orphan" className="hover:text-white transition-colors">Solar Orphans</Link>
-            <Link href="/check" className="hover:text-white transition-colors">Free Health Score</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           </div>

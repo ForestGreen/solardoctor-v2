@@ -63,7 +63,7 @@ export const blogPosts: BlogPost[] = [
   // ============================================================
   {
     slug: "is-my-solar-system-working",
-    title: "Is My Solar System Actually Working? 5 Signs It's Not",
+    title: "Are My Solar Panels Working? 5 Signs They're Not",
     excerpt: "Most homeowners have no idea their solar panels are underperforming. Here are the warning signs you're losing money every month.",
     category: "Monitoring",
     date: "2025-03-01",
@@ -169,7 +169,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-much-should-solar-panels-produce",
-    title: "How Much Should My Solar Panels Produce Each Month?",
+    title: "How Much Electricity Should My Solar Panels Produce?",
     excerpt: "Your system size, location, and time of year all affect production. Here's how to calculate if you're getting what you paid for.",
     category: "Education",
     date: "2025-01-15",
@@ -210,7 +210,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "solar-monitoring-apps-compared",
-    title: "Solar Monitoring Apps Compared: SolarEdge vs Enphase vs SolarDoctor",
+    title: "SolarEdge vs Enphase Monitoring: Which Is Better? (2026)",
     excerpt: "Inverter apps show you data. SolarDoctor tells you what that data means. Here's how they differ.",
     category: "Comparison",
     date: "2024-12-15",
