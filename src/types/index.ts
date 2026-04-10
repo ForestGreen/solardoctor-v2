@@ -1,11 +1,11 @@
-// ─── SolarEdge API Types ───
+// SolarEdge API Types
 
 export interface SolarEdgeSiteDetails {
   id: number;
   name: string;
   accountId: number;
   status: string;
-  peakPower: number; // kW
+  peakPower: number;
   installationDate: string;
   type: string;
   location: {
@@ -27,7 +27,7 @@ export interface SolarEdgeSiteDetails {
 
 export interface SolarEdgeEnergyValue {
   date: string;
-  value: number | null; // Wh
+  value: number | null;
 }
 
 export interface SolarEdgeOverview {
@@ -36,27 +36,38 @@ export interface SolarEdgeOverview {
   lastYearData: { energy: number };
   lastMonthData: { energy: number };
   lastDayData: { energy: number };
-  currentPower: { power: number }; // Watts
+  currentPower: { power: number };
 }
 
-// ─── PVWatts Types ───
+export interface NormalizedSystemInfo {
+  name: string;
+  capacityKw: number;
+  city: string;
+  state: string;
+  postalCode?: string;
+  country?: string;
+  currentPowerW: number;
+  lifetimeEnergyWh: number;
+}
+
+// PVWatts Types
 
 export interface PVWattsRequest {
   lat: number;
   lon: number;
-  system_capacity: number; // kW
-  azimuth?: number; // degrees, default 180 (south)
-  tilt?: number; // degrees, default = latitude
-  array_type?: number; // 0=fixed open, 1=fixed roof, 2=1-axis, etc.
-  module_type?: number; // 0=standard, 1=premium, 2=thin film
-  losses?: number; // %, default 14
+  system_capacity: number;
+  azimuth?: number;
+  tilt?: number;
+  array_type?: number;
+  module_type?: number;
+  losses?: number;
 }
 
 export interface PVWattsResponse {
   outputs: {
-    ac_monthly: number[]; // 12 values, kWh per month
-    ac_annual: number; // total annual kWh
-    solrad_monthly: number[]; // solar radiation per month
+    ac_monthly: number[];
+    ac_annual: number;
+    solrad_monthly: number[];
     solrad_annual: number;
     capacity_factor: number;
   };
@@ -72,7 +83,7 @@ export interface PVWattsResponse {
   };
 }
 
-// ─── Health Score Types ───
+// Health Score Types
 
 export type HealthStatus =
   | "healthy"
@@ -84,11 +95,11 @@ export type HealthStatus =
   | "no_data";
 
 export interface MonthlyHealthScore {
-  month: number; // 1-12
+  month: number;
   year: number;
   actualKwh: number;
   expectedKwh: number;
-  score: number; // percentage (actual/expected * 100)
+  score: number;
   status: HealthStatus;
 }
 
@@ -107,7 +118,7 @@ export interface SystemHealthSummary {
   estimatedLostDollars: number;
 }
 
-// ─── Database Types ───
+// Database Types
 
 export interface SolarSystem {
   id: string;

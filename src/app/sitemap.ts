@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { allBlogPosts } from "@/lib/blog-posts";
 import { inverterModels } from "@/lib/inverter-models";
+import { installers } from "@/lib/solar-orphan-data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.getsolardoctor.com";
@@ -65,5 +66,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // via share links. We don't include them in the sitemap since they're
   // user-generated and could number in the thousands.
 
-  return [...staticPages, ...blogPages, ...inverterPages];
+  // Solar orphan pages
+  const orphanPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/solar-orphan`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    },
+    ...installers.map((installer) => ({
+      url: `${baseUrl}/solar-orphan/${installer.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+  ];
+
+  return [...staticPages, ...blogPages, ...inverterPages, ...orphanPages];
 }

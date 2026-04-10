@@ -1,19 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSystemDataForHealthScore } from "@/lib/solaredge";
+import {
+  getEnphaseDataForHealthScore,
+  convertEnphaseIntervalsToMonthlyEnergy,
+} from "@/lib/enphase";
+import { geocodePostalCode } from "@/lib/geocode";
 import { getExpectedMonthlyKwh } from "@/lib/pvwatts";
-import { buildHealthSummary } from "@/lib/health-score";
+import {
+  buildHealthSummary,
+  buildNormalizedHealthSummary,
+} from "@/lib/health-score";
+import { rateLimit } from "@/lib/rate-limit";
 
-/**
- * POST /api/health-score/preview
- * Body: { siteId: string, apiKey: string }
- *
- * PUBLIC endpoint — no authentication required.
- * Returns a health score preview for any valid SolarEdge site.
- * Used on the free health check landing page.
- */
 export async function POST(request: NextRequest) {
   try {
-    const { siteId, apiKey } = await request.json();
+    // Rate limit: 5 requests per minute per IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const { success, remaining } = rateLimit(`preview:${ip}`, { maxRequests: 5, windowMs: 60_000 });
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute before trying again." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const { brand = "solaredge", siteId, apiKey } = await request.json();
 
     if (!siteId || !apiKey) {
       return NextResponse.json(
@@ -22,31 +34,77 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch data from SolarEdge API (last 12 months for preview)
-    const { details, overview, monthlyEnergy } =
-      await getSystemDataForHealthScore(siteId, apiKey, 12);
+    let summary;
 
-    // Get expected production from PVWatts
-    const lat = details.location.latitude;
-    const lon = details.location.longitude;
-    const capacityKw = details.peakPower;
+    if (brand === "enphase") {
+      const developerApiKey = process.env.ENPHASE_API_KEY;
+      if (!developerApiKey) {
+        return NextResponse.json(
+          { error: "Enphase support is not configured yet." },
+          { status: 500 }
+        );
+      }
 
-    const expectedMonthlyKwh = await getExpectedMonthlyKwh(
-      lat,
-      lon,
-      capacityKw
-    );
+      const { summary: enphaseSummary, production } =
+        await getEnphaseDataForHealthScore(siteId, developerApiKey, apiKey, 12);
 
-    // Build health summary
-    const summary = buildHealthSummary(
-      "preview",
-      details,
-      overview,
-      monthlyEnergy,
-      expectedMonthlyKwh
-    );
+      if (!enphaseSummary.postal_code) {
+        return NextResponse.json(
+          { error: "This Enphase system does not expose a postal code yet." },
+          { status: 400 }
+        );
+      }
 
-    // Return a trimmed preview (don't expose full detail on public endpoint)
+      const location = await geocodePostalCode(
+        enphaseSummary.postal_code,
+        enphaseSummary.country || "US"
+      );
+
+      const expectedMonthlyKwh = await getExpectedMonthlyKwh(
+        location.latitude,
+        location.longitude,
+        enphaseSummary.system_size / 1000
+      );
+
+      const monthlyEnergy = convertEnphaseIntervalsToMonthlyEnergy(production);
+
+      summary = buildNormalizedHealthSummary(
+        "preview",
+        {
+          name:
+            enphaseSummary.system_name ||
+            enphaseSummary.system_public_name ||
+            `Enphase System ${siteId}`,
+          capacityKw: enphaseSummary.system_size / 1000,
+          city: enphaseSummary.city || location.city,
+          state: enphaseSummary.state || location.state,
+          postalCode: enphaseSummary.postal_code,
+          country: enphaseSummary.country,
+          currentPowerW: enphaseSummary.current_power ?? 0,
+          lifetimeEnergyWh: enphaseSummary.energy_lifetime ?? 0,
+        },
+        monthlyEnergy,
+        expectedMonthlyKwh
+      );
+    } else {
+      const { details, overview, monthlyEnergy } =
+        await getSystemDataForHealthScore(siteId, apiKey, 12);
+
+      const expectedMonthlyKwh = await getExpectedMonthlyKwh(
+        details.location.latitude,
+        details.location.longitude,
+        details.peakPower
+      );
+
+      summary = buildHealthSummary(
+        "preview",
+        details,
+        overview,
+        monthlyEnergy,
+        expectedMonthlyKwh
+      );
+    }
+
     return NextResponse.json({
       systemName: summary.systemName,
       systemCapacityKw: summary.systemCapacityKw,
@@ -58,22 +116,23 @@ export async function POST(request: NextRequest) {
       latestScore: summary.latestScore,
       estimatedLostKwh: summary.estimatedLostKwh,
       estimatedLostDollars: summary.estimatedLostDollars,
-      // Only return last 6 months for the preview chart
       recentMonths: summary.monthlyScores.slice(-6),
     });
   } catch (error: any) {
     console.error("Health score preview error:", error);
 
-    // Friendly error messages
-    if (error.message?.includes("403")) {
+    if (error.message?.includes("403") || error.message?.includes("401")) {
       return NextResponse.json(
-        { error: "Invalid API key. Please check your SolarEdge API key and try again." },
+        {
+          error:
+            "Invalid credentials. Please check your inverter access details and try again.",
+        },
         { status: 400 }
       );
     }
     if (error.message?.includes("404")) {
       return NextResponse.json(
-        { error: "Site not found. Please check your Site ID and try again." },
+        { error: "Site not found. Please check your system ID and try again." },
         { status: 400 }
       );
     }

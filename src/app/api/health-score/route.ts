@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSystemDataForHealthScore } from "@/lib/solaredge";
+import {
+  getEnphaseDataForHealthScore,
+  convertEnphaseIntervalsToMonthlyEnergy,
+} from "@/lib/enphase";
 import { getExpectedMonthlyKwh } from "@/lib/pvwatts";
-import { buildHealthSummary } from "@/lib/health-score";
+import {
+  buildHealthSummary,
+  buildNormalizedHealthSummary,
+} from "@/lib/health-score";
 
-/**
- * GET /api/health-score?systemId=...
- *
- * Fetches actual production from SolarEdge, expected production from PVWatts,
- * and returns a complete health score summary.
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient();
 
-    // Verify authentication
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get system ID from query params
     const systemId = request.nextUrl.searchParams.get("systemId");
     if (!systemId) {
       return NextResponse.json(
@@ -31,7 +30,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch system details from database
     const { data: system, error: dbError } = await supabase
       .from("solar_systems")
       .select("*")
@@ -40,57 +38,106 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (dbError || !system) {
-      return NextResponse.json(
-        { error: "System not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "System not found" }, { status: 404 });
     }
 
     if (!system.site_id || !system.api_key) {
       return NextResponse.json(
-        { error: "System missing SolarEdge credentials" },
+        { error: "System is missing inverter credentials" },
         { status: 400 }
       );
     }
 
-    // Fetch data from SolarEdge API
-    const { details, overview, monthlyEnergy } =
-      await getSystemDataForHealthScore(system.site_id, system.api_key);
+    let summary;
 
-    // Get expected production from PVWatts
-    const lat = system.latitude ?? details.location.latitude;
-    const lon = system.longitude ?? details.location.longitude;
-    const capacityKw = system.system_capacity_kw ?? details.peakPower;
+    if (system.type === "enphase") {
+      const developerApiKey = process.env.ENPHASE_API_KEY;
+      if (!developerApiKey) {
+        return NextResponse.json(
+          { error: "Enphase support is not configured yet" },
+          { status: 500 }
+        );
+      }
 
-    const expectedMonthlyKwh = await getExpectedMonthlyKwh(
-      lat,
-      lon,
-      capacityKw
-    );
+      if (!system.latitude || !system.longitude || !system.system_capacity_kw) {
+        return NextResponse.json(
+          {
+            error:
+              "Enphase system is missing location metadata. Reconnect the system and try again.",
+          },
+          { status: 400 }
+        );
+      }
 
-    // Build health summary
-    const summary = buildHealthSummary(
-      systemId,
-      details,
-      overview,
-      monthlyEnergy,
-      expectedMonthlyKwh
-    );
+      const { summary: enphaseSummary, production } =
+        await getEnphaseDataForHealthScore(
+          system.site_id,
+          developerApiKey,
+          system.api_key
+        );
 
-    // Update system metadata in DB if not already set
-    if (!system.latitude || !system.system_capacity_kw) {
-      await supabase
-        .from("solar_systems")
-        .update({
-          system_capacity_kw: details.peakPower,
-          latitude: details.location.latitude,
-          longitude: details.location.longitude,
-          zip_code: details.location.zip,
-          city: details.location.city,
-          state: details.location.state,
-          install_date: details.installationDate,
-        })
-        .eq("id", systemId);
+      const expectedMonthlyKwh = await getExpectedMonthlyKwh(
+        system.latitude,
+        system.longitude,
+        system.system_capacity_kw
+      );
+
+      const monthlyEnergy = convertEnphaseIntervalsToMonthlyEnergy(production);
+
+      summary = buildNormalizedHealthSummary(
+        systemId,
+        {
+          name:
+            enphaseSummary.system_name ||
+            enphaseSummary.system_public_name ||
+            `Enphase System ${system.site_id}`,
+          capacityKw: system.system_capacity_kw,
+          city: system.city || enphaseSummary.city,
+          state: system.state || enphaseSummary.state,
+          postalCode: system.zip_code || enphaseSummary.postal_code,
+          country: enphaseSummary.country,
+          currentPowerW: enphaseSummary.current_power ?? 0,
+          lifetimeEnergyWh: enphaseSummary.energy_lifetime ?? 0,
+        },
+        monthlyEnergy,
+        expectedMonthlyKwh
+      );
+    } else {
+      const { details, overview, monthlyEnergy } =
+        await getSystemDataForHealthScore(system.site_id, system.api_key);
+
+      const lat = system.latitude ?? details.location.latitude;
+      const lon = system.longitude ?? details.location.longitude;
+      const capacityKw = system.system_capacity_kw ?? details.peakPower;
+
+      const expectedMonthlyKwh = await getExpectedMonthlyKwh(
+        lat,
+        lon,
+        capacityKw
+      );
+
+      summary = buildHealthSummary(
+        systemId,
+        details,
+        overview,
+        monthlyEnergy,
+        expectedMonthlyKwh
+      );
+
+      if (!system.latitude || !system.system_capacity_kw) {
+        await supabase
+          .from("solar_systems")
+          .update({
+            system_capacity_kw: details.peakPower,
+            latitude: details.location.latitude,
+            longitude: details.location.longitude,
+            zip_code: details.location.zip,
+            city: details.location.city,
+            state: details.location.state,
+            install_date: details.installationDate,
+          })
+          .eq("id", systemId);
+      }
     }
 
     return NextResponse.json(summary);

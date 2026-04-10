@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { trackEvent } from "@/lib/tracking";
+import { DEMO_DATA } from "@/lib/demo-data";
 
-type HealthStatus = "overperforming" | "healthy" | "underperforming" | "problem" | "critical" | "offline" | "no_data";
+type HealthStatus =
+  | "overperforming"
+  | "healthy"
+  | "underperforming"
+  | "problem"
+  | "critical"
+  | "offline"
+  | "no_data";
 type InverterBrand = "solaredge" | "enphase";
 
 interface MonthlyScore {
@@ -29,14 +38,17 @@ interface HealthPreview {
   recentMonths: MonthlyScore[];
 }
 
-const STATUS_CONFIG: Record<HealthStatus, { color: string; bg: string; label: string; emoji: string }> = {
-  overperforming: { color: "text-blue-700", bg: "bg-blue-50", label: "Overperforming", emoji: "🔵" },
-  healthy: { color: "text-green-700", bg: "bg-green-50", label: "Healthy", emoji: "🟢" },
-  underperforming: { color: "text-yellow-700", bg: "bg-yellow-50", label: "Underperforming", emoji: "🟡" },
-  problem: { color: "text-orange-700", bg: "bg-orange-50", label: "Problem Detected", emoji: "🟠" },
-  critical: { color: "text-red-700", bg: "bg-red-50", label: "Critical", emoji: "🔴" },
-  offline: { color: "text-gray-700", bg: "bg-gray-50", label: "Offline", emoji: "⚫" },
-  no_data: { color: "text-gray-500", bg: "bg-gray-50", label: "No Data", emoji: "⚪" },
+const STATUS_CONFIG: Record<
+  HealthStatus,
+  { color: string; bg: string; label: string; emoji: string }
+> = {
+  overperforming: { color: "text-blue-700", bg: "bg-blue-50", label: "Overperforming", emoji: "*" },
+  healthy: { color: "text-green-700", bg: "bg-green-50", label: "Healthy", emoji: "*" },
+  underperforming: { color: "text-yellow-700", bg: "bg-yellow-50", label: "Underperforming", emoji: "*" },
+  problem: { color: "text-orange-700", bg: "bg-orange-50", label: "Problem Detected", emoji: "*" },
+  critical: { color: "text-red-700", bg: "bg-red-50", label: "Critical", emoji: "*" },
+  offline: { color: "text-gray-700", bg: "bg-gray-50", label: "Offline", emoji: "-" },
+  no_data: { color: "text-gray-500", bg: "bg-gray-50", label: "No Data", emoji: "-" },
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -55,15 +67,18 @@ export default function CheckPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
 
-  // Lightweight event tracking (fire-and-forget)
-  function trackEvent(eventName: string, properties?: Record<string, any>) {
-    try {
-      fetch("/api/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventName, properties }),
-      }).catch(() => {});
-    } catch {}
+  const credentialLabel = brand === "solaredge" ? "SolarEdge API Key" : "Enphase Access Token";
+  const idLabel = brand === "solaredge" ? "SolarEdge Site ID" : "Enphase System ID";
+
+  const scoreColor = useMemo(
+    () => (result ? getScoreColor(result.overallScore) : ""),
+    [result]
+  );
+
+  function switchBrand(nextBrand: InverterBrand) {
+    setBrand(nextBrand);
+    setError(null);
+    setShowWalkthrough(false);
   }
 
   async function handleCheck(e: React.FormEvent) {
@@ -73,31 +88,36 @@ export default function CheckPage() {
     setResult(null);
     setReportUrl(null);
 
-    trackEvent("check_started", { brand, hasSiteId: !!siteId.trim(), hasApiKey: !!apiKey.trim() });
+    trackEvent("check_started", {
+      brand,
+      hasSiteId: !!siteId.trim(),
+      hasApiKey: !!apiKey.trim(),
+    });
 
     try {
-      if (brand === "enphase") {
-        setError("Enphase support is coming soon! We're working on integrating the Enphase API. Enter your email below to be notified when it's ready.");
-        setLoading(false);
-        return;
-      }
-
       const response = await fetch("/api/health-score/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: siteId.trim(), apiKey: apiKey.trim() }),
+        body: JSON.stringify({
+          brand,
+          siteId: siteId.trim(),
+          apiKey: apiKey.trim(),
+        }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Failed to fetch health score");
       }
 
       setResult(data);
-      trackEvent("check_completed", { score: data.overallScore, status: data.overallStatus, location: data.location });
+      trackEvent("check_completed", {
+        brand,
+        score: data.overallScore,
+        status: data.overallStatus,
+        location: data.location,
+      });
 
-      // Save report for sharing (fire and forget)
       try {
         const reportResponse = await fetch("/api/report", {
           method: "POST",
@@ -109,16 +129,8 @@ export default function CheckPage() {
           setReportUrl(`https://www.getsolardoctor.com/report/${reportData.reportId}`);
         }
       } catch {
-        // Report saving is optional - don't block the UX
+        // Report saving is optional.
       }
-
-      // Track conversion event
-      try {
-        if (typeof window !== "undefined" && (window as any).va) {
-          (window as any).va("event", { name: "health_check_completed", data: { score: data.overallScore, status: data.overallStatus } });
-        }
-      } catch {}
-
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
       trackEvent("check_error", { error: err.message, brand });
@@ -144,37 +156,31 @@ export default function CheckPage() {
         throw new Error(data.error || "Failed to subscribe");
       }
       setEmailSubmitted(true);
-      trackEvent("email_subscribed", { source: "check_results" });
-    } catch (err: any) {
+      trackEvent("alert_signup", { source: "check_results", brand });
+    } catch {
       setEmailSubmitted(true);
     }
   }
 
   async function copyShareLink() {
     if (!reportUrl) return;
-    trackEvent("report_shared", { method: "copy_link" });
     try {
       await navigator.clipboard.writeText(reportUrl);
       setLinkCopied(true);
+      trackEvent("report_share", {
+        method: "copy_link",
+        brand,
+        score: result?.overallScore,
+        status: result?.overallStatus,
+      });
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
-      const input = document.createElement("input");
-      input.value = reportUrl;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+      setLinkCopied(false);
     }
   }
 
-  const scoreColor = result ? getScoreColor(result.overallScore) : "";
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
       <nav className="border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <Link href="/" className="text-lg font-bold text-green-700">SolarDoctor</Link>
@@ -188,13 +194,13 @@ export default function CheckPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!result ? (
           <>
-            {/* Input Form */}
             <div className="text-center mb-10">
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
                 Check Your Solar System Health
               </h1>
               <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                Get an instant health score for your solar system. Free, no account required.
+                Get a plain-English answer on whether your system is protecting your
+                savings, how much money may be at risk, and what to do next.
               </p>
             </div>
 
@@ -202,37 +208,9 @@ export default function CheckPage() {
               {error && (
                 <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm mb-5">
                   {error}
-                  {brand === "enphase" && (
-                    <div className="mt-3">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="your@email.com"
-                        className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm mb-2"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (email.trim()) {
-                            fetch("/api/subscribe", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ email: email.trim(), siteId: "enphase-waitlist", apiKey: "pending" }),
-                            });
-                            setError("Thanks! We'll notify you when Enphase support is live.");
-                          }
-                        }}
-                        className="w-full bg-red-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700"
-                      >
-                        Notify Me When Ready
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Inverter Brand Selector */}
               <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   What brand is your inverter?
@@ -240,7 +218,7 @@ export default function CheckPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => { setBrand("solaredge"); setError(null); }}
+                    onClick={() => switchBrand("solaredge")}
                     className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
                       brand === "solaredge"
                         ? "border-green-500 bg-green-50 text-green-700"
@@ -251,7 +229,7 @@ export default function CheckPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setBrand("enphase"); setError(null); }}
+                    onClick={() => switchBrand("enphase")}
                     className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
                       brand === "enphase"
                         ? "border-orange-500 bg-orange-50 text-orange-700"
@@ -259,207 +237,182 @@ export default function CheckPage() {
                     }`}
                   >
                     Enphase
-                    <span className="block text-xs font-normal mt-0.5 opacity-70">Coming soon</span>
                   </button>
                 </div>
               </div>
 
-              {brand === "solaredge" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SolarEdge Site ID
-                    </label>
-                    <input
-                      type="text"
-                      value={siteId}
-                      onChange={(e) => setSiteId(e.target.value)}
-                      required
-                      placeholder="e.g. 1234567"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      The number in your SolarEdge monitoring URL, or on your inverter label
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      SolarEdge API Key
-                    </label>
-                    <input
-                      type="text"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      required
-                      placeholder="e.g. AEME1A9NVQ..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => { if (!showWalkthrough) trackEvent("walkthrough_opened"); setShowWalkthrough(!showWalkthrough); }}
-                      className="text-xs text-green-600 hover:text-green-700 mt-1 underline"
+              <div className="space-y-4">
+                {brand === "enphase" && (
+                  <div className="space-y-3">
+                    <a
+                      href="/api/enphase/authorize?returnTo=/check"
+                      onClick={() => trackEvent("enphase_oauth_started", { source: "check_page" })}
+                      className="w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
                     >
-                      {showWalkthrough ? "Hide instructions" : "Where do I find this?"}
-                    </button>
-                  </div>
-
-                  {/* Step-by-step API Key Walkthrough */}
-                  {showWalkthrough && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
-                      <p className="text-sm font-semibold text-gray-800">
-                        How to get your SolarEdge API key (takes ~2 minutes):
-                      </p>
-                      <div className="space-y-3">
-                        <div className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                          <div>
-                            <p className="text-sm text-gray-700">Go to <a href="https://monitoring.solaredge.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline font-medium">monitoring.solaredge.com</a> and log in</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Use the same email/password from when your system was installed</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                          <div>
-                            <p className="text-sm text-gray-700">Find your <strong>Site ID</strong> in the URL bar</p>
-                            <p className="text-xs text-gray-400 mt-0.5">It&apos;s the number after &ldquo;/site/&rdquo; — e.g., monitoring.solaredge.com/...site/<strong>1234567</strong>/...</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                          <div>
-                            <p className="text-sm text-gray-700">Click the <strong>Admin</strong> icon (gear) in the left sidebar</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">4</span>
-                          <div>
-                            <p className="text-sm text-gray-700">Click <strong>Site Access</strong> &rarr; then <strong>API Access</strong></p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">5</span>
-                          <div>
-                            <p className="text-sm text-gray-700">If you see an API key, <strong>copy it</strong>. If not, check the &ldquo;I accept&rdquo; box and click <strong>Generate API Key</strong></p>
-                            <p className="text-xs text-gray-400 mt-0.5">The key looks like a long string: AEME1A9NVQFKGHQFSF97LUP9OH7OPPIO</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xs text-gray-500">
-                          <strong>Don&apos;t have a SolarEdge login?</strong> Contact your installer — they may have set up the account for you. You can also check for a sticker on your inverter with the Site ID.
-                        </p>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <p className="text-xs text-blue-700">
-                          <strong>Your data is safe.</strong> We use your API key only to fetch production data in real time. We never store your API key and all connections use HTTPS encryption.
-                        </p>
-                      </div>
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                      Connect with Enphase Account
+                    </a>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                      <div className="relative flex justify-center text-xs"><span className="px-2 bg-gray-50 text-gray-400">or enter credentials manually</span></div>
                     </div>
-                  )}
+                  </div>
+                )}
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {idLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={siteId}
+                    onChange={(e) => setSiteId(e.target.value)}
+                    required
+                    placeholder={brand === "solaredge" ? "e.g. 1234567" : "e.g. 9876543"}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    {brand === "solaredge"
+                      ? "The number in your SolarEdge monitoring URL, or on your inverter label"
+                      : "The system ID tied to your Enphase homeowner account"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {credentialLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    required
+                    placeholder={brand === "solaredge" ? "e.g. AEME1A9NVQ..." : "Paste your Enphase access token"}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
                   <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    type="button"
+                    onClick={() => {
+                      if (!showWalkthrough) {
+                        trackEvent("walkthrough_opened", { brand });
+                      }
+                      setShowWalkthrough(!showWalkthrough);
+                    }}
+                    className="text-xs text-green-600 hover:text-green-700 mt-1 underline"
                   >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Analyzing your system...
-                      </span>
-                    ) : (
-                      "Get My Health Score"
-                    )}
+                    {showWalkthrough ? "Hide instructions" : "Where do I find this?"}
                   </button>
                 </div>
-              )}
 
-              {brand === "enphase" && (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                {showWalkthrough && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+                    <p className="text-sm font-semibold text-gray-800">
+                      {brand === "solaredge"
+                        ? "How to find your SolarEdge Site ID & API Key"
+                        : "How to use the Enphase beta flow"}
+                    </p>
+                    <div className="space-y-4 text-sm text-gray-700">
+                      {brand === "solaredge" ? (
+                        <>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-900 mb-1">Step 1: Find your Site ID</p>
+                            <p>Go to <a href="https://monitoring.solaredge.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">monitoring.solaredge.com</a> and log in. Your Site ID is the number in the URL after you log in — it looks like <code className="bg-gray-200 px-1 rounded text-xs">1234567</code>.</p>
+                            <p className="text-xs text-gray-500 mt-1">Example URL: monitoring.solaredge.com/solaredge-web/p/site/<strong>1234567</strong>/...</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-900 mb-1">Step 2: Get your API Key</p>
+                            <p>In the SolarEdge portal, click <strong>Admin</strong> (top menu) &rarr; <strong>Site Access</strong> &rarr; <strong>API Access</strong>.</p>
+                            <p className="mt-1">If API Access is enabled, you&apos;ll see your key. If not, check the box to enable it, then copy the key that appears.</p>
+                            <p className="text-xs text-gray-500 mt-1">The key looks like: <code className="bg-gray-200 px-1 rounded">AEME1A9NVQ...</code> (about 32 characters)</p>
+                          </div>
+                          <div className="bg-amber-50 rounded-lg p-3">
+                            <p className="font-medium text-amber-900 mb-1">Don&apos;t have portal access?</p>
+                            <p className="text-amber-800">If you can&apos;t log into the SolarEdge portal, your installer may not have given you access. You can:</p>
+                            <ul className="list-disc ml-4 mt-1 space-y-1 text-amber-800">
+                              <li>Ask your installer to enable your portal account</li>
+                              <li>Contact SolarEdge support at <a href="https://www.solaredge.com/service/support" target="_blank" rel="noopener noreferrer" className="underline">solaredge.com/support</a></li>
+                              <li>Check your installation paperwork — some installers include the Site ID</li>
+                            </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-900 mb-1">Step 1: Get your Enphase access token</p>
+                            <p>You&apos;ll need an active Enphase API access token from your developer or homeowner account workflow.</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="font-medium text-gray-900 mb-1">Step 2: Find your System ID</p>
+                            <p>Your System ID is visible in the Enlighten app or at <a href="https://enlighten.enphaseenergy.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">enlighten.enphaseenergy.com</a>.</p>
+                          </div>
+                          <div className="bg-blue-50 rounded-lg p-3 text-blue-800">
+                            <p className="font-medium mb-1">Enphase OAuth coming soon</p>
+                            <p className="text-xs">We&apos;re working on a simpler flow where you just log in with your Enphase account — no tokens needed. For now, the beta requires a developer access token.</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+                      <strong>Your data is stored to power ongoing monitoring.</strong> We keep your credential on file so we can run future checks and alerts for you.
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Enphase Support Coming Soon</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    We&apos;re building Enphase integration right now. Enter your email to be first to know when it&apos;s ready.
-                  </p>
-                  <div className="flex gap-2 max-w-sm mx-auto">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (email.trim()) {
-                          fetch("/api/subscribe", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ email: email.trim(), siteId: "enphase-waitlist", apiKey: "pending" }),
-                          });
-                          trackEvent("enphase_waitlist", { email: email.trim() });
-                          setEmailSubmitted(true);
-                        }
-                      }}
-                      className="bg-orange-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600"
-                    >
-                      Notify Me
-                    </button>
-                  </div>
-                  {emailSubmitted && (
-                    <p className="text-sm text-green-600 mt-2">You&apos;re on the list! We&apos;ll email you when Enphase is ready.</p>
-                  )}
-                </div>
-              )}
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {loading ? "Analyzing your system..." : "Get My Health Score"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    trackEvent("demo_viewed", { source: "check_page" });
+                    setResult(DEMO_DATA);
+                  }}
+                  className="w-full text-sm text-gray-500 hover:text-gray-700 py-2 underline"
+                >
+                  See a demo with real data first
+                </button>
+              </div>
             </form>
 
-            {/* Trust signals */}
             <div className="mt-10 text-center text-sm text-gray-400 space-y-1">
-              <p>No account required. No credit card. Takes 30 seconds.</p>
-              <p>Works with any SolarEdge residential or commercial system.</p>
+              <p>No account required. No credit card. Takes about 2 minutes.</p>
+              <p>Works with SolarEdge now and Enphase beta with access token.</p>
             </div>
 
-            {/* Social proof / what you'll get */}
             <div className="mt-12 max-w-lg mx-auto">
               <h2 className="text-sm font-semibold text-gray-800 mb-4 text-center">What you&apos;ll get in your free health report:</h2>
               <div className="grid gap-3 text-sm">
                 <div className="flex gap-3 items-start">
                   <span className="text-green-500 mt-0.5">&#10003;</span>
-                  <span className="text-gray-600"><strong>Health Score (0-120)</strong> — see if your system is producing what it should based on your location and system size</span>
+                  <span className="text-gray-600"><strong>Health Score</strong> - see if your system is producing what it should based on location and system size</span>
                 </div>
                 <div className="flex gap-3 items-start">
                   <span className="text-green-500 mt-0.5">&#10003;</span>
-                  <span className="text-gray-600"><strong>Lost Production Estimate</strong> — how many kWh and dollars you may be losing to underperformance</span>
+                  <span className="text-gray-600"><strong>Estimated Dollars At Risk</strong> - how much hidden underperformance may be costing you</span>
                 </div>
                 <div className="flex gap-3 items-start">
                   <span className="text-green-500 mt-0.5">&#10003;</span>
-                  <span className="text-gray-600"><strong>6-Month Trend</strong> — monthly performance chart showing actual vs expected production</span>
+                  <span className="text-gray-600"><strong>What To Do Next</strong> - whether to keep monitoring, contact your installer, or share the report</span>
                 </div>
                 <div className="flex gap-3 items-start">
                   <span className="text-green-500 mt-0.5">&#10003;</span>
-                  <span className="text-gray-600"><strong>Shareable Report</strong> — a unique URL you can share with neighbors, your installer, or on social media</span>
+                  <span className="text-gray-600"><strong>Shareable Report</strong> - a unique URL you can send to your installer, compare with a neighbor, or save for a warranty claim</span>
                 </div>
               </div>
             </div>
           </>
         ) : (
           <>
-            {/* Results */}
             <div className="text-center mb-8">
               <p className="text-sm text-gray-500 mb-2">{result.systemName} &middot; {result.location}</p>
               <p className="text-sm text-gray-400">{result.systemCapacityKw} kW system &middot; {Math.round(result.lifetimeKwh).toLocaleString()} kWh lifetime</p>
             </div>
 
-            {/* Score Circle */}
             <div className="flex flex-col items-center mb-10">
               <div className={`w-36 h-36 rounded-full flex flex-col items-center justify-center ${STATUS_CONFIG[result.overallStatus].bg} border-4 ${getBorderColor(result.overallStatus)}`}>
                 <span className={`text-4xl font-bold ${scoreColor}`}>
@@ -472,8 +425,7 @@ export default function CheckPage() {
               </span>
             </div>
 
-            {/* Key Stats */}
-            <div className="grid gap-4 sm:grid-cols-3 mb-10">
+            <div className="grid gap-4 sm:grid-cols-3 mb-8">
               <div className="bg-gray-50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-gray-900">
                   {result.currentPowerW > 0 ? `${(result.currentPowerW / 1000).toFixed(1)} kW` : "0 kW"}
@@ -494,7 +446,22 @@ export default function CheckPage() {
               </div>
             </div>
 
-            {/* Monthly Chart */}
+            <div className="bg-amber-50 rounded-2xl p-5 mb-8">
+              <h3 className="text-sm font-semibold text-amber-900 mb-2">What to do next</h3>
+              <div className="space-y-2 text-sm text-amber-900">
+                <p>
+                  {result.overallScore >= 90
+                    ? "Your system looks healthy. Save this report and set alerts so you know if that changes."
+                    : "Your score suggests underperformance. Save this report and send it to your installer or service provider."}
+                </p>
+                <p>
+                  {result.estimatedLostDollars > 0
+                    ? `Current estimate: about $${Math.round(result.estimatedLostDollars).toLocaleString()} in savings may be at risk.`
+                    : "No meaningful savings loss is showing right now, which is a good sign."}
+                </p>
+              </div>
+            </div>
+
             {result.recentMonths.length > 0 && (
               <div className="mb-10">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Monthly Performance</h3>
@@ -510,11 +477,7 @@ export default function CheckPage() {
                             className={`h-full rounded-full ${getBarColor(m.status)} transition-all`}
                             style={{ width: `${Math.max(pct, 2)}%` }}
                           />
-                          <div
-                            className="absolute top-0 h-full w-0.5 bg-gray-400"
-                            style={{ left: "83.3%" }}
-                            title="Expected (100%)"
-                          />
+                          <div className="absolute top-0 h-full w-0.5 bg-gray-400" style={{ left: "83.3%" }} title="Expected (100%)" />
                         </div>
                         <span className={`w-12 text-right text-xs font-medium ${cfg.color}`}>
                           {Math.round(m.score)}%
@@ -524,25 +487,24 @@ export default function CheckPage() {
                   })}
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  Bar shows actual vs expected production. Gray line = 100% (expected).
+                  Bar shows actual vs expected production. Gray line = 100% expected.
                 </p>
               </div>
             )}
 
-            {/* Share Button */}
             {reportUrl && (
               <div className="bg-gray-50 rounded-2xl p-5 mb-8">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-800">Share your report</p>
-                    <p className="text-xs text-gray-500">Help neighbors check their systems too</p>
+                    <p className="text-xs text-gray-500">Show your installer what to fix, or help a neighbor check their own system</p>
                   </div>
                   <div className="flex gap-2">
                     <a
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(reportUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => trackEvent("report_shared", { method: "facebook" })}
+                      onClick={() => trackEvent("report_share", { method: "facebook", brand, score: result.overallScore, status: result.overallStatus })}
                       className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700"
                     >
                       Facebook
@@ -551,7 +513,7 @@ export default function CheckPage() {
                       href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`My solar system scored ${Math.round(result.overallScore)}/100 on SolarDoctor! ${STATUS_CONFIG[result.overallStatus].emoji} Check yours free:`)}&url=${encodeURIComponent(reportUrl)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => trackEvent("report_shared", { method: "twitter" })}
+                      onClick={() => trackEvent("report_share", { method: "x", brand, score: result.overallScore, status: result.overallStatus })}
                       className="bg-sky-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-sky-600"
                     >
                       X / Twitter
@@ -567,14 +529,13 @@ export default function CheckPage() {
               </div>
             )}
 
-            {/* Email Capture CTA */}
             {!showEmailCapture && !emailSubmitted && (
               <div className="bg-green-50 rounded-2xl p-6 sm:p-8 text-center mb-8">
                 <h3 className="text-lg font-bold text-green-900 mb-2">
                   Want weekly updates on your system&apos;s health?
                 </h3>
                 <p className="text-sm text-green-700 mb-4">
-                  We&apos;ll email you a one-line health report every week — and alert you immediately if your score drops.
+                  We&apos;ll email you a one-line health report every week and alert you immediately if your score drops.
                 </p>
                 <button
                   onClick={() => setShowEmailCapture(true)}
@@ -619,7 +580,6 @@ export default function CheckPage() {
               </div>
             )}
 
-            {/* Try Again */}
             <div className="text-center">
               <button
                 onClick={() => { setResult(null); setError(null); setReportUrl(null); }}
@@ -632,7 +592,6 @@ export default function CheckPage() {
         )}
       </div>
 
-      {/* SEO Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -685,3 +644,4 @@ function getBarColor(status: HealthStatus): string {
   };
   return map[status];
 }
+

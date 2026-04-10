@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { FunnelTracker } from "@/components/FunnelTracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,6 +40,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-white antialiased">
+        <Suspense fallback={null}>
+          <FunnelTracker />
+        </Suspense>
         {children}
         <Analytics />
         <SpeedInsights />

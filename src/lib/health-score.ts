@@ -1,15 +1,13 @@
 import type {
   HealthStatus,
   MonthlyHealthScore,
+  NormalizedSystemInfo,
   SystemHealthSummary,
   SolarEdgeSiteDetails,
   SolarEdgeOverview,
   SolarEdgeEnergyValue,
 } from "@/types";
-
-// ─── Constants ───
-
-const ELECTRICITY_RATE_PER_KWH = 0.32; // Hawaii average, can be made configurable
+import { getElectricityRate } from "@/lib/electricity-rates";
 
 const SCORE_THRESHOLDS: { min: number; max: number; status: HealthStatus }[] = [
   { min: 110, max: Infinity, status: "overperforming" },
@@ -18,8 +16,6 @@ const SCORE_THRESHOLDS: { min: number; max: number; status: HealthStatus }[] = [
   { min: 50, max: 75, status: "problem" },
   { min: 0, max: 50, status: "critical" },
 ];
-
-// ─── Score Calculation ───
 
 export function getHealthStatus(score: number): HealthStatus {
   if (score <= 0) return "offline";
@@ -34,19 +30,19 @@ export function getHealthStatus(score: number): HealthStatus {
 export function getStatusColor(status: HealthStatus): string {
   switch (status) {
     case "overperforming":
-      return "#3b82f6"; // blue
+      return "#3b82f6";
     case "healthy":
-      return "#22c55e"; // green
+      return "#22c55e";
     case "underperforming":
-      return "#eab308"; // yellow
+      return "#eab308";
     case "problem":
-      return "#f97316"; // orange
+      return "#f97316";
     case "critical":
-      return "#ef4444"; // red
+      return "#ef4444";
     case "offline":
-      return "#6b7280"; // gray
+      return "#6b7280";
     case "no_data":
-      return "#9ca3af"; // light gray
+      return "#9ca3af";
   }
 }
 
@@ -72,23 +68,21 @@ export function getStatusLabel(status: HealthStatus): string {
 export function getStatusEmoji(status: HealthStatus): string {
   switch (status) {
     case "overperforming":
-      return "🔵";
+      return "UP";
     case "healthy":
-      return "🟢";
+      return "OK";
     case "underperforming":
-      return "🟡";
+      return "LOW";
     case "problem":
-      return "🟠";
+      return "WARN";
     case "critical":
-      return "🔴";
+      return "BAD";
     case "offline":
-      return "⚫";
+      return "OFF";
     case "no_data":
-      return "⚪";
+      return "N/A";
   }
 }
-
-// ─── Monthly Score Calculation ───
 
 export function calculateMonthlyScore(
   actualWh: number,
@@ -96,7 +90,7 @@ export function calculateMonthlyScore(
   month: number,
   year: number
 ): MonthlyHealthScore {
-  const actualKwh = actualWh / 1000; // SolarEdge returns Wh
+  const actualKwh = actualWh / 1000;
   const score = expectedKwh > 0 ? (actualKwh / expectedKwh) * 100 : 0;
   const status = actualWh === 0 ? "offline" : getHealthStatus(score);
 
@@ -110,63 +104,72 @@ export function calculateMonthlyScore(
   };
 }
 
-// ─── Full System Health Summary ───
-
 export function buildHealthSummary(
   systemId: string,
   details: SolarEdgeSiteDetails,
   overview: SolarEdgeOverview,
   monthlyEnergy: SolarEdgeEnergyValue[],
-  expectedMonthlyKwh: number[] // 12 values, Jan=index 0
+  expectedMonthlyKwh: number[]
 ): SystemHealthSummary {
-  // Calculate monthly health scores
+  return buildNormalizedHealthSummary(
+    systemId,
+    {
+      name: details.name,
+      capacityKw: details.peakPower,
+      city: details.location.city,
+      state: details.location.state,
+      postalCode: details.location.zip,
+      country: details.location.country,
+      currentPowerW: overview.currentPower?.power ?? 0,
+      lifetimeEnergyWh: overview.lifeTimeData?.energy ?? 0,
+    },
+    monthlyEnergy,
+    expectedMonthlyKwh
+  );
+}
+
+export function buildNormalizedHealthSummary(
+  systemId: string,
+  systemInfo: NormalizedSystemInfo,
+  monthlyEnergy: SolarEdgeEnergyValue[],
+  expectedMonthlyKwh: number[]
+): SystemHealthSummary {
   const monthlyScores: MonthlyHealthScore[] = [];
 
   for (const entry of monthlyEnergy) {
     if (entry.value === null || entry.value === undefined) continue;
 
     const date = new Date(entry.date);
-    const month = date.getMonth() + 1; // 1-12
+    const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    const expectedKwh = expectedMonthlyKwh[month - 1]; // 0-indexed array
+    const expectedKwh = expectedMonthlyKwh[month - 1];
 
-    const score = calculateMonthlyScore(entry.value, expectedKwh, month, year);
-    monthlyScores.push(score);
+    monthlyScores.push(calculateMonthlyScore(entry.value, expectedKwh, month, year));
   }
 
-  // Latest complete month score
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  // Find most recent complete month (not the current partial month)
-  const latestScore =
-    monthlyScores
-      .filter(
-        (s) =>
-          !(s.month === currentMonth && s.year === currentYear) &&
-          s.actualKwh > 0
-      )
-      .sort((a, b) => {
-        if (a.year !== b.year) return b.year - a.year;
-        return b.month - a.month;
-      })[0] ?? null;
-
-  // Overall score: average of last 12 months (excluding current partial month)
-  const last12 = monthlyScores
+  const completeMonths = monthlyScores
     .filter(
-      (s) =>
-        !(s.month === currentMonth && s.year === currentYear) &&
-        s.actualKwh > 0
+      (score) =>
+        !(score.month === currentMonth && score.year === currentYear) &&
+        score.actualKwh > 0
     )
-    .slice(-12);
+    .sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+
+  const latestScore = [...completeMonths].reverse()[0] ?? null;
+  const last12 = completeMonths.slice(-12);
 
   const overallScore =
     last12.length > 0
-      ? last12.reduce((sum, s) => sum + s.score, 0) / last12.length
+      ? last12.reduce((sum, score) => sum + score.score, 0) / last12.length
       : 0;
 
-  // Estimate lost production and dollars
   let totalLostKwh = 0;
   for (const score of monthlyScores) {
     if (score.score < 90 && score.expectedKwh > 0) {
@@ -175,23 +178,23 @@ export function buildHealthSummary(
     }
   }
 
+  const ratePerKwh = getElectricityRate(systemInfo.state);
+
   return {
     systemId,
-    systemName: details.name,
-    systemCapacityKw: details.peakPower,
-    location: `${details.location.city}, ${details.location.state}`,
-    currentPowerW: overview.currentPower?.power ?? 0,
-    lifetimeKwh: (overview.lifeTimeData?.energy ?? 0) / 1000,
+    systemName: systemInfo.name,
+    systemCapacityKw: systemInfo.capacityKw,
+    location: `${systemInfo.city}, ${systemInfo.state}`,
+    currentPowerW: systemInfo.currentPowerW,
+    lifetimeKwh: systemInfo.lifetimeEnergyWh / 1000,
     monthlyScores,
     latestScore,
     overallScore: Math.round(overallScore * 10) / 10,
     overallStatus: getHealthStatus(overallScore),
     estimatedLostKwh: Math.round(totalLostKwh),
-    estimatedLostDollars: Math.round(totalLostKwh * ELECTRICITY_RATE_PER_KWH),
+    estimatedLostDollars: Math.round(totalLostKwh * ratePerKwh),
   };
 }
-
-// ─── Alert Logic ───
 
 export interface AlertRecommendation {
   shouldAlert: boolean;
@@ -216,19 +219,11 @@ export function checkForAlerts(
     };
   }
 
-  if (latest.status === "problem") {
+  if (latest.status === "problem" || latest.status === "underperforming") {
     return {
       shouldAlert: true,
       alertType: "underperforming",
-      message: `Your solar system "${summary.systemName}" produced ${latest.actualKwh} kWh in ${getMonthName(latest.month)} ${latest.year}, which is ${Math.round(100 - latest.score)}% below the expected ${latest.expectedKwh} kWh. This could indicate shading, soiling, or a hardware issue worth investigating.`,
-    };
-  }
-
-  if (latest.status === "underperforming") {
-    return {
-      shouldAlert: true,
-      alertType: "underperforming",
-      message: `Your solar system "${summary.systemName}" produced ${latest.actualKwh} kWh in ${getMonthName(latest.month)} ${latest.year}, which is ${Math.round(100 - latest.score)}% below the expected ${latest.expectedKwh} kWh. This is slightly below normal and worth keeping an eye on.`,
+      message: `Your solar system "${summary.systemName}" produced ${latest.actualKwh} kWh in ${getMonthName(latest.month)} ${latest.year}, which is ${Math.round(100 - latest.score)}% below the expected ${latest.expectedKwh} kWh. This is worth investigating.`,
     };
   }
 
@@ -237,8 +232,18 @@ export function checkForAlerts(
 
 function getMonthName(month: number): string {
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   return months[month - 1];
 }

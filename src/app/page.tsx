@@ -1,10 +1,18 @@
 import Link from "next/link";
-import { Sun, Bell, Shield, TrendingUp, AlertTriangle, ChevronRight } from "lucide-react";
+import {
+  Sun,
+  Bell,
+  Shield,
+  TrendingUp,
+  AlertTriangle,
+  ChevronRight,
+} from "lucide-react";
+import { TrackedLink } from "@/components/TrackedLink";
+import { MobileNav } from "@/components/MobileNav";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -14,7 +22,7 @@ export default function HomePage() {
                 Solar<span className="text-brand-600">Doctor</span>
               </span>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6">
               <Link href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">
                 How It Works
               </Link>
@@ -24,41 +32,43 @@ export default function HomePage() {
               <Link href="/auth" className="text-sm text-gray-600 hover:text-gray-900">
                 Log In
               </Link>
-              <Link
-                href="/auth?mode=signup"
+              <TrackedLink
+                href="/check"
+                placement="nav"
+                destination="check"
                 className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
               >
-                Sign Up Free
-              </Link>
+                Free Health Check
+              </TrackedLink>
             </div>
+            <MobileNav />
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-solar-yellow/10 text-solar-orange px-4 py-1.5 rounded-full text-sm font-medium mb-6">
             <Sun className="h-4 w-4" />
-            The Doctor Is In
+            Free solar health check
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-            Is your solar system{" "}
-            <span className="text-brand-600">actually working?</span>
+            Catch solar underperformance <span className="text-brand-600">before your bill does.</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Most homeowners don&apos;t know their solar panels are underperforming
-            until they see their electric bill. SolarDoctor gives you a free
-            health score and alerts — so you never lose money silently.
+            Run a free health check to see whether your system is producing what it
+            should, how much savings may be at risk, and when you should take action.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/auth?mode=signup"
+            <TrackedLink
+              href="/check"
+              placement="hero_primary"
+              destination="check"
               className="inline-flex items-center justify-center bg-brand-600 text-white px-8 py-3.5 rounded-xl text-lg font-semibold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/25"
             >
-              Get Your Free Health Score
+              Run Free Health Check
               <ChevronRight className="ml-2 h-5 w-5" />
-            </Link>
+            </TrackedLink>
             <Link
               href="#how-it-works"
               className="inline-flex items-center justify-center bg-gray-100 text-gray-700 px-8 py-3.5 rounded-xl text-lg font-medium hover:bg-gray-200 transition-colors"
@@ -69,7 +79,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof Bar */}
       <section className="border-y border-gray-100 bg-gray-50 py-6">
         <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center gap-8 text-center">
           <div>
@@ -82,23 +91,22 @@ export default function HomePage() {
           </div>
           <div>
             <div className="text-2xl font-bold text-solar-orange">70-80%</div>
-            <div className="text-sm text-gray-500">efficiency loss goes unnoticed</div>
+            <div className="text-sm text-gray-500">silent losses can go unnoticed</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-brand-600">Free</div>
-            <div className="text-sm text-gray-500">forever for early adopters</div>
+            <div className="text-2xl font-bold text-brand-600">2 min</div>
+            <div className="text-sm text-gray-500">to get a real answer</div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
       <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
             How SolarDoctor Works
           </h2>
           <p className="text-gray-600 text-center max-w-2xl mx-auto mb-12">
-            Three steps. Five minutes. Know exactly how your solar investment is performing.
+            One quick check. One plain-English answer. One less thing to worry about.
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -107,9 +115,9 @@ export default function HomePage() {
                 <Shield className="h-7 w-7 text-brand-600" />
               </div>
               <div className="text-sm font-semibold text-brand-600 mb-2">Step 1</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Sign Up Free</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Run The Check</h3>
               <p className="text-gray-600 text-sm">
-                Create a free account with just your email. No credit card ever.
+                Start with a free health check. No account or credit card required.
               </p>
             </div>
 
@@ -120,8 +128,8 @@ export default function HomePage() {
               <div className="text-sm font-semibold text-brand-600 mb-2">Step 2</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Connect Your System</h3>
               <p className="text-gray-600 text-sm">
-                Enter your SolarEdge Site ID and API Key. We&apos;ll auto-detect your
-                system size, location, and panel type.
+                Connect SolarEdge now, or Enphase beta if you have your access token.
+                We auto-detect the system details we need.
               </p>
             </div>
 
@@ -130,17 +138,16 @@ export default function HomePage() {
                 <TrendingUp className="h-7 w-7 text-blue-600" />
               </div>
               <div className="text-sm font-semibold text-brand-600 mb-2">Step 3</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Get Your Health Score</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Get A Real Answer</h3>
               <p className="text-gray-600 text-sm">
-                See exactly how your system performs vs. what it should produce —
-                plus alerts when something goes wrong.
+                See your health score, estimated lost savings, and what to do next if
+                something looks off.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* The Story */}
       <section id="story" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">
@@ -153,41 +160,29 @@ export default function HomePage() {
             </p>
             <p>
               That was my wife&apos;s reaction when we discovered our rooftop solar
-              system had been completely offline for 8 months. $2,500 in savings —
+              system had been completely offline for 8 months. $2,500 in savings -
               gone.
             </p>
             <p>
-              I&apos;m Rich. I&apos;ve worked in the solar industry for nearly 20 years
-              and am known as the guy that was first to call out that solar farms
-              nationwide were underperforming — kinda like Steve Carell in the Big
-              Short. So if anyone should know better: it should be me.
+              I&apos;m Rich. I&apos;ve worked in the solar industry for nearly 20 years.
+              If anyone should have caught it quickly, it should have been me.
             </p>
             <p>
-              But here&apos;s what I discovered:{" "}
-              <strong>it wasn&apos;t entirely my fault.</strong>
+              But the bigger lesson was this: homeowners are often the last people
+              to know when their own system stops performing.
             </p>
             <p>
-              My installer likely turned off my monitoring alerts — on purpose.
-              Why? Because fewer alerts to me meant fewer warranty service calls
-              for them. It&apos;s a common practice that saves installers money,
-              especially during the 10-year workmanship warranty.
-            </p>
-            <p>
-              I built SolarDoctor — first for myself, and now for you. It&apos;s a
-              simple tool with a powerful purpose: to tell you not just{" "}
-              <em>if</em> your system is working, but{" "}
-              <em>how well</em> it&apos;s performing compared to what it should
-              produce.
+              I built SolarDoctor to answer one question clearly: is your system
+              producing what it should, or are you quietly losing savings every month?
             </p>
             <p className="text-brand-700 font-medium">
               No one will care about your solar investment as much as you do.
-              SolarDoctor is the tool that has your back.
+              SolarDoctor is built to give you the truth fast.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Key Features */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
@@ -201,73 +196,67 @@ export default function HomePage() {
                 Health Score, Not Just Data
               </h3>
               <p className="text-gray-600">
-                Your inverter app shows kWh. We tell you what those kWh
-                <em> mean</em>. Is 500 kWh this month good or bad? We compare
-                your actual production to what your system should produce based
-                on its size, location, and weather — in plain English.
+                Your inverter app shows numbers. SolarDoctor tells you whether those
+                numbers are healthy for your system, location, and season.
               </p>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <Bell className="h-8 w-8 text-solar-orange mb-4" />
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Alerts That Actually Work
+                Alerts That Work For You
               </h3>
               <p className="text-gray-600">
-                Unlike your installer (who may have disabled your alerts),
-                SolarDoctor will always tell you when your system stops
-                performing. No conflicts of interest. We work for you.
+                We store the connection needed to keep checking your system and alert
+                you when savings are at risk.
               </p>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <AlertTriangle className="h-8 w-8 text-solar-red mb-4" />
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Solar Orphan? We&apos;ve Got You.
+                Solar Orphan Friendly
               </h3>
               <p className="text-gray-600">
-                If your installer went out of business (100+ bankruptcies in
-                2024 alone), you&apos;re not alone. SolarDoctor becomes your
-                monitoring backstop — plus we help you understand what warranties
-                you still have.
+                If your installer disappeared, SolarDoctor still gives you a way to
+                monitor performance and show a new service provider what&apos;s wrong.
               </p>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <Shield className="h-8 w-8 text-blue-600 mb-4" />
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Free Forever for Early Adopters
+                Built For Homeowners
               </h3>
               <p className="text-gray-600">
-                We&apos;re building this for the solar community. Sign up now
-                and you&apos;ll always have free access to health scores and
-                alerts. Tell your solar-owning friends and neighbors.
+                Not for installer dashboards. Not for utility reporting. Just a clear,
+                homeowner-first answer about whether your investment is doing its job.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-brand-600">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Stop losing money in silence.
           </h2>
           <p className="text-brand-100 text-lg mb-8">
-            Get your free health score in under 5 minutes.
+            Run the free check, see your score, and share it with your installer or neighbor.
           </p>
-          <Link
-            href="/auth?mode=signup"
+          <TrackedLink
+            href="/check"
+            placement="footer"
+            destination="check"
             className="inline-flex items-center bg-white text-brand-700 px-8 py-3.5 rounded-xl text-lg font-semibold hover:bg-brand-50 transition-colors"
           >
-            Sign Up Free
+            Start Free Check
             <ChevronRight className="ml-2 h-5 w-5" />
-          </Link>
+          </TrackedLink>
         </div>
       </section>
 
-      {/* Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -301,11 +290,6 @@ export default function HomePage() {
               price: "0",
               priceCurrency: "USD",
             },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: "4.8",
-              ratingCount: "47",
-            },
           }),
         }}
       />
@@ -338,20 +322,20 @@ export default function HomePage() {
             step: [
               {
                 "@type": "HowToStep",
-                name: "Sign Up Free",
-                text: "Create a free account with just your email. No credit card ever.",
+                name: "Run The Check",
+                text: "Start a free health check. No account or credit card required.",
                 url: "https://www.getsolardoctor.com/check",
               },
               {
                 "@type": "HowToStep",
                 name: "Connect Your System",
-                text: "Enter your SolarEdge Site ID and API Key. We auto-detect your system size, location, and panel type.",
+                text: "Enter your SolarEdge Site ID and API key, or use Enphase beta with an access token.",
                 url: "https://www.getsolardoctor.com/check",
               },
               {
                 "@type": "HowToStep",
-                name: "Get Your Health Score",
-                text: "See exactly how your system performs vs. what it should produce — plus alerts when something goes wrong.",
+                name: "Review Your Results",
+                text: "See your health score, estimated lost savings, and what to do next.",
                 url: "https://www.getsolardoctor.com/check",
               },
             ],
@@ -360,7 +344,6 @@ export default function HomePage() {
         }}
       />
 
-      {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
@@ -370,6 +353,7 @@ export default function HomePage() {
           <div className="flex gap-6 text-sm">
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
             <Link href="/inverters" className="hover:text-white transition-colors">Inverter Guides</Link>
+            <Link href="/solar-orphan" className="hover:text-white transition-colors">Solar Orphans</Link>
             <Link href="/check" className="hover:text-white transition-colors">Free Health Score</Link>
             <Link href="mailto:hello@getsolardoctor.com" className="hover:text-white transition-colors">Contact</Link>
           </div>
@@ -381,3 +365,4 @@ export default function HomePage() {
     </div>
   );
 }
+
