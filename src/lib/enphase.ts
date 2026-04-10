@@ -1,10 +1,22 @@
 /**
  * Enphase API Integration
+ *
+ * Includes automatic token refresh on 401 when a refresh token
+ * and Supabase client + system ID are provided.
  */
 
 import type { SolarEdgeEnergyValue } from "@/types";
+import { refreshEnphaseToken } from "@/lib/enphase-oauth";
+import { encryptCredential, decryptCredential } from "@/lib/crypto";
 
 const ENPHASE_BASE = "https://api.enphaseenergy.com/api/v4";
+
+// Optional context for auto-refresh on 401
+export interface EnphaseRefreshContext {
+  supabase: any; // SupabaseClient
+  systemId: string; // solar_systems.id
+  refreshToken: string; // decrypted refresh token
+}
 
 export interface EnphaseSystemSummary {
   system_id: number;
@@ -43,15 +55,45 @@ export interface EnphaseProductionStats {
 async function fetchEnphase(
   path: string,
   apiKey: string,
-  accessToken: string
+  accessToken: string,
+  refreshCtx?: EnphaseRefreshContext
 ): Promise<any> {
   const url = `${ENPHASE_BASE}${path}`;
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       key: apiKey,
     },
   });
+
+  // Auto-refresh on 401 if refresh context is available
+  if (response.status === 401 && refreshCtx) {
+    try {
+      console.log("Enphase token expired, attempting refresh...");
+      const refreshed = await refreshEnphaseToken(refreshCtx.refreshToken);
+
+      // Update stored tokens in database (encrypted)
+      await refreshCtx.supabase
+        .from("solar_systems")
+        .update({
+          api_key: encryptCredential(refreshed.accessToken),
+          username: encryptCredential(refreshed.refreshToken),
+        })
+        .eq("id", refreshCtx.systemId);
+
+      // Retry the original request with the new token
+      response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${refreshed.accessToken}`,
+          key: apiKey,
+        },
+      });
+    } catch (refreshError: any) {
+      throw new Error(
+        `Enphase token expired and refresh failed. Please re-authorize your Enphase account. (${refreshError.message})`
+      );
+    }
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -66,9 +108,10 @@ async function fetchEnphase(
 export async function getEnphaseSystemSummary(
   systemId: string,
   apiKey: string,
-  accessToken: string
+  accessToken: string,
+  refreshCtx?: EnphaseRefreshContext
 ): Promise<EnphaseSystemSummary> {
-  return fetchEnphase(`/systems/${systemId}/summary`, apiKey, accessToken);
+  return fetchEnphase(`/systems/${systemId}/summary`, apiKey, accessToken, refreshCtx);
 }
 
 export async function getEnphaseMonthlyProduction(
@@ -76,12 +119,14 @@ export async function getEnphaseMonthlyProduction(
   apiKey: string,
   accessToken: string,
   startAt: number,
-  endAt: number
+  endAt: number,
+  refreshCtx?: EnphaseRefreshContext
 ): Promise<EnphaseProductionStats> {
   return fetchEnphase(
     `/systems/${systemId}/stats?start_at=${startAt}&end_at=${endAt}&interval=day`,
     apiKey,
-    accessToken
+    accessToken,
+    refreshCtx
   );
 }
 
@@ -124,7 +169,8 @@ export async function getEnphaseDataForHealthScore(
   systemId: string,
   apiKey: string,
   accessToken: string,
-  months: number = 12
+  months: number = 12,
+  refreshCtx?: EnphaseRefreshContext
 ) {
   const now = new Date();
   const startDate = new Date(now);
@@ -134,8 +180,8 @@ export async function getEnphaseDataForHealthScore(
   const endAt = Math.floor(now.getTime() / 1000);
 
   const [summary, production] = await Promise.all([
-    getEnphaseSystemSummary(systemId, apiKey, accessToken),
-    getEnphaseMonthlyProduction(systemId, apiKey, accessToken, startAt, endAt),
+    getEnphaseSystemSummary(systemId, apiKey, accessToken, refreshCtx),
+    getEnphaseMonthlyProduction(systemId, apiKey, accessToken, startAt, endAt, refreshCtx),
   ]);
 
   return { summary, production };

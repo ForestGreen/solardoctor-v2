@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { exchangeEnphaseCode } from "@/lib/enphase-oauth";
+import { encryptCredential } from "@/lib/crypto";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -73,8 +74,8 @@ export async function GET(request: NextRequest) {
             user_id: state.userId,
             type: "enphase",
             site_id: String(firstSystem.system_id),
-            api_key: accessToken,
-            username: refreshToken, // Store refresh token in username field temporarily
+            api_key: encryptCredential(accessToken),
+            username: encryptCredential(refreshToken), // Store refresh token (encrypted)
             status: "active",
             system_capacity_kw: firstSystem.system_size ? firstSystem.system_size / 1000 : null,
             city: firstSystem.city || null,

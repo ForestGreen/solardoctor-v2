@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { validateCredentials } from "@/lib/solaredge";
+import { encryptCredential } from "@/lib/crypto";
 
 /**
  * POST /api/systems/connect
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         type: "solaredge",
         site_id: siteId,
-        api_key: apiKey,
+        api_key: encryptCredential(apiKey),
         status: "active",
         system_capacity_kw: details.peakPower,
         latitude: details.location.latitude,

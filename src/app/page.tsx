@@ -180,6 +180,16 @@ export default function HomePage() {
               SolarDoctor is built to give you the truth fast.
             </p>
           </div>
+
+          <div className="mt-8 flex items-center gap-4 pt-6 border-t border-gray-200">
+            <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xl">
+              R
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">Rich</p>
+              <p className="text-sm text-gray-500">Founder, SolarDoctor &middot; 20 years in solar energy</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -355,7 +365,8 @@ export default function HomePage() {
             <Link href="/inverters" className="hover:text-white transition-colors">Inverter Guides</Link>
             <Link href="/solar-orphan" className="hover:text-white transition-colors">Solar Orphans</Link>
             <Link href="/check" className="hover:text-white transition-colors">Free Health Score</Link>
-            <Link href="mailto:hello@getsolardoctor.com" className="hover:text-white transition-colors">Contact</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           </div>
           <div className="text-sm">
             &copy; {new Date().getFullYear()} SolarDoctor. All rights reserved.

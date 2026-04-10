@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/email";
+import { encryptCredential } from "@/lib/crypto";
 
 /**
  * POST /api/subscribe
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
         {
           email: email.toLowerCase().trim(),
           site_id: siteId.trim(),
-          api_key: apiKey.trim(),
+          api_key: encryptCredential(apiKey.trim()),
           subscribed: true,
           updated_at: new Date().toISOString(),
         },

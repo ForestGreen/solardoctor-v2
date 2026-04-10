@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSystemDataForHealthScore } from "@/lib/solaredge";
+import { decryptCredential } from "@/lib/crypto";
 import {
   getEnphaseDataForHealthScore,
   convertEnphaseIntervalsToMonthlyEnergy,
@@ -48,6 +49,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt stored credentials
+    const decryptedApiKey = decryptCredential(system.api_key);
+    const decryptedRefreshToken = system.username ? decryptCredential(system.username) : null;
+
     let summary;
 
     if (system.type === "enphase") {
@@ -73,7 +78,12 @@ export async function GET(request: NextRequest) {
         await getEnphaseDataForHealthScore(
           system.site_id,
           developerApiKey,
-          system.api_key
+          decryptedApiKey,
+          12,
+          // Provide refresh context so tokens auto-refresh on 401
+          decryptedRefreshToken
+            ? { supabase, systemId, refreshToken: decryptedRefreshToken }
+            : undefined
         );
 
       const expectedMonthlyKwh = await getExpectedMonthlyKwh(
@@ -104,7 +114,7 @@ export async function GET(request: NextRequest) {
       );
     } else {
       const { details, overview, monthlyEnergy } =
-        await getSystemDataForHealthScore(system.site_id, system.api_key);
+        await getSystemDataForHealthScore(system.site_id, decryptedApiKey);
 
       const lat = system.latitude ?? details.location.latitude;
       const lon = system.longitude ?? details.location.longitude;

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
+// Note: Credential encryption happens server-side via /api/systems/connect
+// The browser client insert is being replaced with a server call for security
+
 export default function ConnectSystemPage() {
   const router = useRouter();
   const [brand, setBrand] = useState<"solaredge" | "enphase">("solaredge");

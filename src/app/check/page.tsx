@@ -257,6 +257,58 @@ export default function CheckPage() {
               </p>
             </div>
 
+            {/* Demo showcase — shows what the product does before asking for credentials */}
+            {!loading && (
+              <div className="mb-10 relative max-w-lg mx-auto">
+                <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-6 opacity-90">
+                  <p className="text-center text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Real system &middot; Honolulu, HI &middot; 7.6 kW</p>
+                  <div className="flex justify-center mb-4">
+                    <div className="w-24 h-24 rounded-full flex flex-col items-center justify-center bg-orange-50 border-4 border-orange-200">
+                      <span className="text-2xl font-bold text-orange-600">72</span>
+                      <span className="text-[10px] text-gray-500">out of 100</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 text-center text-xs mb-4">
+                    <div className="bg-gray-50 rounded-lg p-2">
+                      <p className="font-bold text-gray-900">7.6 kW</p>
+                      <p className="text-gray-500">System</p>
+                    </div>
+                    <div className="bg-orange-50 rounded-lg p-2">
+                      <p className="font-bold text-orange-700">-1,441 kWh</p>
+                      <p className="text-gray-500">Lost</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-2">
+                      <p className="font-bold text-red-700">-$562</p>
+                      <p className="text-gray-500">At Risk</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 h-8 items-end justify-center">
+                    {[99,103,98,95,18,7].map((score, i) => (
+                      <div
+                        key={i}
+                        className={`w-8 rounded-t ${score > 89 ? 'bg-green-400' : score > 49 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                        style={{ height: `${Math.max(score * 0.3, 4)}px` }}
+                        title={`${['May','Jun','Jul','Aug','Sep','Oct'][i]}: ${score}%`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-center text-[10px] text-gray-400 mt-1">May - Oct 2024 &middot; System went critical in Sept</p>
+                </div>
+                <div className="absolute inset-0 flex items-end justify-center pb-6 bg-gradient-to-t from-white via-white/80 to-transparent rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      trackEvent("demo_viewed", { source: "check_hero" });
+                      setResult(DEMO_DATA);
+                    }}
+                    className="bg-brand-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-brand-700 transition-colors shadow-lg text-sm"
+                  >
+                    See the full demo report
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleCheck} className="bg-gray-50 rounded-2xl p-6 sm:p-8 max-w-lg mx-auto">
               {error && (
                 <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm mb-5">
@@ -419,16 +471,6 @@ export default function CheckPage() {
                   {loading ? "Analyzing your system..." : "Get My Health Score"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackEvent("demo_viewed", { source: "check_page" });
-                    setResult(DEMO_DATA);
-                  }}
-                  className="w-full text-sm text-gray-500 hover:text-gray-700 py-2 underline"
-                >
-                  See a demo with real data first
-                </button>
               </div>
             </form>
 
