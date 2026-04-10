@@ -1,17 +1,8 @@
 /**
  * Enphase API Integration
- *
- * Enphase uses OAuth2 for their API. For the public health check,
- * we use the Enphase Developer API v4 which requires:
- * - An API key (from developer.enphase.com)
- * - An access token (from OAuth2 flow)
- *
- * For the MVP public health check, we support two modes:
- * 1. System owner shares their Enphase System ID + we use our app credentials
- * 2. OAuth flow where the user authorizes read access
- *
- * Enphase API docs: https://developer-v4.enphase.com/docs
  */
+
+import type { SolarEdgeEnergyValue } from "@/types";
 
 const ENPHASE_BASE = "https://api.enphaseenergy.com/api/v4";
 
@@ -28,35 +19,26 @@ export interface EnphaseSystemSummary {
   connection_type: string;
   meta: {
     status: string;
-    last_report_at: number; // unix timestamp
+    last_report_at: number;
     last_energy_at: number;
     operational_at: number;
   };
-  energy_lifetime: number; // Wh
-  energy_today: number; // Wh
-  system_size: number; // W (DC)
-  current_power: number; // W
-  modules: number; // panel count
-}
-
-export interface EnphaseMonthlyProduction {
-  system_id: number;
-  start_at: number; // unix timestamp
-  end_at: number;
-  production: number; // Wh for the period
+  energy_lifetime: number;
+  energy_today: number;
+  system_size: number;
+  current_power: number;
+  modules: number;
 }
 
 export interface EnphaseProductionStats {
   system_id: number;
   total_devices: number;
   intervals: {
-    end_at: number; // unix timestamp
+    end_at: number;
     devices_reporting: number;
-    wh_del: number; // Wh delivered (produced)
+    wh_del: number;
   }[];
 }
-
-// ─── API Helpers ───
 
 async function fetchEnphase(
   path: string,
@@ -81,37 +63,46 @@ async function fetchEnphase(
   return response.json();
 }
 
-// ─── System Summary ───
-
 export async function getEnphaseSystemSummary(
   systemId: string,
   apiKey: string,
   accessToken: string
 ): Promise<EnphaseSystemSummary> {
-  return fetchEnphase(
-    `/systems/${systemId}/summary`,
-    apiKey,
-    accessToken
-  );
+  return fetchEnphase(`/systems/${systemId}/summary`, apiKey, accessToken);
 }
-
-// ─── Monthly Production (using stats endpoint) ───
 
 export async function getEnphaseMonthlyProduction(
   systemId: string,
   apiKey: string,
   accessToken: string,
-  startAt: number, // unix timestamp
+  startAt: number,
   endAt: number
 ): Promise<EnphaseProductionStats> {
   return fetchEnphase(
-    `/systems/${systemId}/energy_lifetime?start_at=${startAt}&end_at=${endAt}&production=all`,
+    `/systems/${systemId}/stats?start_at=${startAt}&end_at=${endAt}&interval=day`,
     apiKey,
     accessToken
   );
 }
 
-// ─── Validate Credentials ───
+export function convertEnphaseIntervalsToMonthlyEnergy(
+  production: EnphaseProductionStats
+): SolarEdgeEnergyValue[] {
+  const monthlyTotals = new Map<string, number>();
+
+  for (const interval of production.intervals || []) {
+    const date = new Date(interval.end_at * 1000);
+    const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+    monthlyTotals.set(key, (monthlyTotals.get(key) || 0) + (interval.wh_del || 0));
+  }
+
+  return Array.from(monthlyTotals.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => ({
+      date: `${key}-01T00:00:00.000Z`,
+      value,
+    }));
+}
 
 export async function validateEnphaseCredentials(
   systemId: string,
@@ -119,11 +110,7 @@ export async function validateEnphaseCredentials(
   accessToken: string
 ): Promise<{ valid: boolean; summary?: EnphaseSystemSummary; error?: string }> {
   try {
-    const summary = await getEnphaseSystemSummary(
-      systemId,
-      apiKey,
-      accessToken
-    );
+    const summary = await getEnphaseSystemSummary(systemId, apiKey, accessToken);
     return { valid: true, summary };
   } catch (error: any) {
     return {
@@ -132,9 +119,6 @@ export async function validateEnphaseCredentials(
     };
   }
 }
-
-// ─── Get System Data for Health Score ───
-// Note: For MVP, Enphase integration requires OAuth. We'll guide users through it.
 
 export async function getEnphaseDataForHealthScore(
   systemId: string,

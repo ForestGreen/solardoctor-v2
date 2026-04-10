@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { ReportShareCard } from "@/components/ReportShareCard";
 
 type HealthStatus =
   | "overperforming"
@@ -39,64 +40,16 @@ const STATUS_CONFIG: Record<
   HealthStatus,
   { color: string; bg: string; label: string; emoji: string }
 > = {
-  overperforming: {
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    label: "Overperforming",
-    emoji: "🔵",
-  },
-  healthy: {
-    color: "text-green-700",
-    bg: "bg-green-50",
-    label: "Healthy",
-    emoji: "🟢",
-  },
-  underperforming: {
-    color: "text-yellow-700",
-    bg: "bg-yellow-50",
-    label: "Underperforming",
-    emoji: "🟡",
-  },
-  problem: {
-    color: "text-orange-700",
-    bg: "bg-orange-50",
-    label: "Problem Detected",
-    emoji: "🟠",
-  },
-  critical: {
-    color: "text-red-700",
-    bg: "bg-red-50",
-    label: "Critical",
-    emoji: "🔴",
-  },
-  offline: {
-    color: "text-gray-700",
-    bg: "bg-gray-50",
-    label: "Offline",
-    emoji: "⚫",
-  },
-  no_data: {
-    color: "text-gray-500",
-    bg: "bg-gray-50",
-    label: "No Data",
-    emoji: "⚪",
-  },
+  overperforming: { color: "text-blue-700", bg: "bg-blue-50", label: "Overperforming", emoji: "*" },
+  healthy: { color: "text-green-700", bg: "bg-green-50", label: "Healthy", emoji: "*" },
+  underperforming: { color: "text-yellow-700", bg: "bg-yellow-50", label: "Underperforming", emoji: "*" },
+  problem: { color: "text-orange-700", bg: "bg-orange-50", label: "Problem Detected", emoji: "*" },
+  critical: { color: "text-red-700", bg: "bg-red-50", label: "Critical", emoji: "*" },
+  offline: { color: "text-gray-700", bg: "bg-gray-50", label: "Offline", emoji: "-" },
+  no_data: { color: "text-gray-500", bg: "bg-gray-50", label: "No Data", emoji: "-" },
 };
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 async function getReport(id: string): Promise<ReportData | null> {
   try {
@@ -122,9 +75,7 @@ export async function generateMetadata({
   const report = await getReport(params.id);
 
   if (!report) {
-    return {
-      title: "Report Not Found - SolarDoctor",
-    };
+    return { title: "Report Not Found - SolarDoctor" };
   }
 
   const status = STATUS_CONFIG[report.overall_status];
@@ -133,7 +84,7 @@ export async function generateMetadata({
   const description =
     report.estimated_lost_dollars > 0
       ? `This ${report.system_capacity_kw}kW solar system in ${report.location} scored ${score}/100. Estimated $${report.estimated_lost_dollars} in lost savings detected. Get your free score at SolarDoctor.`
-      : `This ${report.system_capacity_kw}kW solar system in ${report.location} scored ${score}/100 — ${status.label}. Get your free solar health score at SolarDoctor.`;
+      : `This ${report.system_capacity_kw}kW solar system in ${report.location} scored ${score}/100 - ${status.label}. Get your free solar health score at SolarDoctor.`;
 
   return {
     title,
@@ -152,12 +103,6 @@ export async function generateMetadata({
           alt: `Solar Health Score: ${score}/100 for ${report.location}`,
         },
       ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Solar Health Score: ${score}/100 ${status.emoji}`,
-      description,
-      images: [`https://www.getsolardoctor.com/api/og?score=${score}&status=${report.overall_status}&location=${encodeURIComponent(report.location)}&lost=${report.estimated_lost_dollars}`],
     },
   };
 }
@@ -186,9 +131,7 @@ export default async function ReportPage({
           </div>
         </nav>
         <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Report Not Found
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Report Not Found</h1>
           <p className="text-gray-500 mb-6">
             This report may have expired or the link may be incorrect.
           </p>
@@ -206,21 +149,17 @@ export default async function ReportPage({
   const statusCfg = STATUS_CONFIG[report.overall_status];
   const score = Math.round(report.overall_score);
   const shareUrl = `https://www.getsolardoctor.com/report/${report.id}`;
-  const shareText = `My solar system scored ${score}/100 on SolarDoctor! ${statusCfg.emoji} Check yours free:`;
+  const shareText = `My solar system scored ${score}/100 on SolarDoctor. Estimated savings at risk: $${report.estimated_lost_dollars}. Check yours free: ${shareUrl}`;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
       <nav className="border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <Link href="/" className="text-lg font-bold text-green-700">
             SolarDoctor
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <Link
-              href="/blog"
-              className="text-gray-500 hover:text-gray-700"
-            >
+            <Link href="/blog" className="text-gray-500 hover:text-gray-700">
               Blog
             </Link>
             <Link
@@ -234,196 +173,103 @@ export default async function ReportPage({
       </nav>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="text-center mb-2">
-          <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">
-            Solar Health Report
-          </p>
+          <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">Solar Health Report</p>
           <p className="text-sm text-gray-500 mb-1">
             {report.system_name} &middot; {report.location}
           </p>
           <p className="text-sm text-gray-400">
-            {report.system_capacity_kw} kW system &middot;{" "}
-            {Math.round(report.lifetime_kwh).toLocaleString()} kWh lifetime
+            {report.system_capacity_kw} kW system &middot; {Math.round(report.lifetime_kwh).toLocaleString()} kWh lifetime
           </p>
         </div>
 
-        {/* Score Circle */}
         <div className="flex flex-col items-center my-10">
-          <div
-            className={`w-40 h-40 rounded-full flex flex-col items-center justify-center ${statusCfg.bg} border-4 ${getBorderColor(report.overall_status)}`}
-          >
-            <span
-              className={`text-5xl font-bold ${getScoreColor(report.overall_score)}`}
-            >
+          <div className={`w-40 h-40 rounded-full flex flex-col items-center justify-center ${statusCfg.bg} border-4 ${getBorderColor(report.overall_status)}`}>
+            <span className={`text-5xl font-bold ${getScoreColor(report.overall_score)}`}>
               {score}
             </span>
             <span className="text-xs text-gray-500 mt-1">out of 100</span>
           </div>
-          <span
-            className={`mt-3 text-sm font-semibold ${statusCfg.color}`}
-          >
-            {statusCfg.label}
-          </span>
+          <span className={`mt-3 text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-10">
+        <div className="grid gap-4 sm:grid-cols-3 mb-8">
           <div className="bg-gray-50 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">
-              {report.current_power_w > 0
-                ? `${(report.current_power_w / 1000).toFixed(1)} kW`
-                : "0 kW"}
+              {report.current_power_w > 0 ? `${(report.current_power_w / 1000).toFixed(1)} kW` : "0 kW"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Power at time of check
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Power at time of check</p>
           </div>
-          <div
-            className={`rounded-xl p-4 text-center ${report.estimated_lost_kwh > 0 ? "bg-orange-50" : "bg-green-50"}`}
-          >
-            <p
-              className={`text-2xl font-bold ${report.estimated_lost_kwh > 0 ? "text-orange-700" : "text-green-700"}`}
-            >
-              {report.estimated_lost_kwh > 0
-                ? `-${report.estimated_lost_kwh.toLocaleString()} kWh`
-                : "0 kWh"}
+          <div className={`rounded-xl p-4 text-center ${report.estimated_lost_kwh > 0 ? "bg-orange-50" : "bg-green-50"}`}>
+            <p className={`text-2xl font-bold ${report.estimated_lost_kwh > 0 ? "text-orange-700" : "text-green-700"}`}>
+              {report.estimated_lost_kwh > 0 ? `-${report.estimated_lost_kwh.toLocaleString()} kWh` : "0 kWh"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Estimated lost production
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Estimated lost production</p>
           </div>
-          <div
-            className={`rounded-xl p-4 text-center ${report.estimated_lost_dollars > 0 ? "bg-red-50" : "bg-green-50"}`}
-          >
-            <p
-              className={`text-2xl font-bold ${report.estimated_lost_dollars > 0 ? "text-red-700" : "text-green-700"}`}
-            >
+          <div className={`rounded-xl p-4 text-center ${report.estimated_lost_dollars > 0 ? "bg-red-50" : "bg-green-50"}`}>
+            <p className={`text-2xl font-bold ${report.estimated_lost_dollars > 0 ? "text-red-700" : "text-green-700"}`}>
+              {report.estimated_lost_dollars > 0 ? `-$${report.estimated_lost_dollars.toLocaleString()}` : "$0"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Estimated lost savings</p>
+          </div>
+        </div>
+
+        <div className="bg-amber-50 rounded-2xl p-6 sm:p-8 mb-8">
+          <h3 className="text-lg font-bold text-amber-950 mb-2">What To Do Next</h3>
+          <div className="space-y-2 text-sm text-amber-950">
+            <p>
+              {score >= 90
+                ? "This system looks healthy right now. Save this report as a baseline and keep alerts turned on."
+                : "This system is underperforming enough to justify action. Send this report to your installer or a service technician."}
+            </p>
+            <p>
               {report.estimated_lost_dollars > 0
-                ? `-$${report.estimated_lost_dollars.toLocaleString()}`
-                : "$0"}
+                ? `Estimated savings at risk: about $${report.estimated_lost_dollars.toLocaleString()}.`
+                : "Estimated savings at risk: no material loss detected at the time of this check."}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Estimated lost savings
+            <p>
+              Practical next step: compare the monthly bars below with your utility bill timing, then share the link with the person who can fix it.
             </p>
           </div>
         </div>
 
-        {/* Monthly Performance */}
         {report.recent_months && report.recent_months.length > 0 && (
           <div className="mb-10">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Recent Monthly Performance
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Monthly Performance</h3>
             <div className="space-y-2">
-              {report.recent_months.map(
-                (m: MonthlyScore, i: number) => {
-                  const pct =
-                    m.expectedKwh > 0
-                      ? Math.min(
-                          (m.actualKwh / m.expectedKwh) * 100,
-                          120
-                        )
-                      : 0;
-                  const cfg = STATUS_CONFIG[m.status];
-                  return (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <span className="w-16 text-gray-500 text-xs">
-                        {MONTH_NAMES[m.month - 1]} {m.year}
-                      </span>
-                      <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden relative">
-                        <div
-                          className={`h-full rounded-full ${getBarColor(m.status)} transition-all`}
-                          style={{
-                            width: `${Math.max(pct, 2)}%`,
-                          }}
-                        />
-                        <div
-                          className="absolute top-0 h-full w-0.5 bg-gray-400"
-                          style={{ left: "83.3%" }}
-                          title="Expected (100%)"
-                        />
-                      </div>
-                      <span
-                        className={`w-12 text-right text-xs font-medium ${cfg.color}`}
-                      >
-                        {Math.round(m.score)}%
-                      </span>
+              {report.recent_months.map((m, i) => {
+                const pct = m.expectedKwh > 0 ? Math.min((m.actualKwh / m.expectedKwh) * 100, 120) : 0;
+                const cfg = STATUS_CONFIG[m.status];
+                return (
+                  <div key={i} className="flex items-center gap-3 text-sm">
+                    <span className="w-16 text-gray-500 text-xs">{MONTH_NAMES[m.month - 1]} {m.year}</span>
+                    <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden relative">
+                      <div className={`h-full rounded-full ${getBarColor(m.status)} transition-all`} style={{ width: `${Math.max(pct, 2)}%` }} />
+                      <div className="absolute top-0 h-full w-0.5 bg-gray-400" style={{ left: "83.3%" }} title="Expected (100%)" />
                     </div>
-                  );
-                }
-              )}
+                    <span className={`w-12 text-right text-xs font-medium ${cfg.color}`}>
+                      {Math.round(m.score)}%
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Bar shows actual vs expected production. Gray line = 100%
-              (expected).
-            </p>
+            <p className="text-xs text-gray-400 mt-2">Bar shows actual vs expected production. Gray line = 100% expected.</p>
           </div>
         )}
 
-        {/* Share Section */}
-        <div className="bg-gray-50 rounded-2xl p-6 sm:p-8 text-center mb-8">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
-            Share This Report
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Know a neighbor with solar? Help them check their system too.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-            >
-              Share on Facebook
-            </a>
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-600"
-            >
-              Share on X
-            </a>
-            <a
-              href={`https://nextdoor.com/sharekit/?source=sharer&body=${encodeURIComponent(shareText + " " + shareUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-            >
-              Share on Nextdoor
-            </a>
-          </div>
-          <button
-            onClick={() => {}}
-            className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline"
-            id="copy-link-btn"
-          >
-            Copy link
-          </button>
-          {/* Client-side copy script */}
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-              document.getElementById('copy-link-btn')?.addEventListener('click', function() {
-                navigator.clipboard.writeText('${shareUrl}').then(function() {
-                  var btn = document.getElementById('copy-link-btn');
-                  if (btn) { btn.textContent = 'Link copied!'; setTimeout(function() { btn.textContent = 'Copy link'; }, 2000); }
-                });
-              });
-            `,
-            }}
-          />
-        </div>
+        <ReportShareCard
+          shareUrl={shareUrl}
+          shareText={shareText}
+          score={score}
+          status={report.overall_status}
+          lostDollars={report.estimated_lost_dollars}
+        />
 
-        {/* CTA */}
         <div className="bg-green-50 rounded-2xl p-6 sm:p-8 text-center">
-          <h3 className="text-lg font-bold text-green-900 mb-2">
-            Is your solar system performing?
-          </h3>
+          <h3 className="text-lg font-bold text-green-900 mb-2">Is your solar system performing?</h3>
           <p className="text-sm text-green-700 mb-4">
-            Get your own free health score in 30 seconds. No account required.
+            Run your own free check, see your estimated dollars at risk, and get a report you can share with your installer or neighbor.
           </p>
           <Link
             href="/check"
@@ -433,35 +279,14 @@ export default async function ReportPage({
           </Link>
         </div>
 
-        {/* Timestamp */}
         <p className="text-xs text-gray-300 text-center mt-8">
-          Report generated{" "}
-          {new Date(report.created_at).toLocaleDateString("en-US", {
+          Report generated {new Date(report.created_at).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
           })}
         </p>
       </div>
-
-      {/* Schema */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            headline: `Solar Health Score: ${score}/100 - ${report.location}`,
-            description: `Health report for a ${report.system_capacity_kw}kW solar system in ${report.location}`,
-            url: shareUrl,
-            publisher: {
-              "@type": "Organization",
-              name: "SolarDoctor",
-              url: "https://www.getsolardoctor.com",
-            },
-          }),
-        }}
-      />
     </div>
   );
 }
@@ -499,3 +324,4 @@ function getBarColor(status: HealthStatus): string {
   };
   return map[status];
 }
+
