@@ -10,6 +10,7 @@ import { refreshEnphaseToken } from "@/lib/enphase-oauth";
 import { encryptCredential, decryptCredential } from "@/lib/crypto";
 
 const ENPHASE_BASE = "https://api.enphaseenergy.com/api/v4";
+const FETCH_TIMEOUT = 15_000; // 15 seconds
 
 // Optional context for auto-refresh on 401
 export interface EnphaseRefreshContext {
@@ -64,6 +65,7 @@ async function fetchEnphase(
       Authorization: `Bearer ${accessToken}`,
       key: apiKey,
     },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT),
   });
 
   // Auto-refresh on 401 if refresh context is available
@@ -87,6 +89,7 @@ async function fetchEnphase(
           Authorization: `Bearer ${refreshed.accessToken}`,
           key: apiKey,
         },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT),
       });
     } catch (refreshError: any) {
       throw new Error(

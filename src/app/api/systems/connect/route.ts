@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { validateCredentials } from "@/lib/solaredge";
+import { validateEnphaseCredentials } from "@/lib/enphase";
+import { geocodePostalCode } from "@/lib/geocode";
 import { encryptCredential } from "@/lib/crypto";
 
 /**
  * POST /api/systems/connect
- * Validate SolarEdge credentials and save the system to the database.
+ * Body: { brand: "solaredge" | "enphase", siteId: string, apiKey: string }
+ *
+ * Validates credentials, encrypts them, saves to database, and auto-subscribes
+ * the user to weekly digest emails. This is the ONLY path for saving system
+ * credentials — the dashboard connect page calls this endpoint rather than
+ * inserting directly into Supabase (to ensure server-side encryption).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { siteId, apiKey } = await request.json();
+    const { brand = "solaredge", siteId, apiKey } = await request.json();
 
     if (!siteId || !apiKey) {
       return NextResponse.json(
@@ -27,21 +34,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate with SolarEdge API
-    const validation = await validateCredentials(siteId, apiKey);
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error || "Invalid credentials" },
-        { status: 400 }
-      );
-    }
+    // ─── Validate credentials with the appropriate API ───
 
-    const details = validation.details!;
+    let systemRecord: Record<string, any>;
 
-    // Save to database
-    const { data, error: dbError } = await supabase
-      .from("solar_systems")
-      .insert({
+    if (brand === "enphase") {
+      const developerApiKey = process.env.ENPHASE_API_KEY;
+      if (!developerApiKey) {
+        return NextResponse.json(
+          { error: "Enphase support is not configured yet" },
+          { status: 500 }
+        );
+      }
+
+      const validation = await validateEnphaseCredentials(siteId, developerApiKey, apiKey);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error || "Invalid Enphase credentials" },
+          { status: 400 }
+        );
+      }
+
+      const summary = validation.summary!;
+
+      // Geocode for lat/lon if postal code available
+      let lat: number | null = null;
+      let lon: number | null = null;
+      if (summary.postal_code) {
+        try {
+          const loc = await geocodePostalCode(summary.postal_code, summary.country || "US");
+          lat = loc.latitude;
+          lon = loc.longitude;
+        } catch {}
+      }
+
+      systemRecord = {
+        user_id: user.id,
+        type: "enphase",
+        site_id: siteId,
+        api_key: encryptCredential(apiKey),
+        status: "active",
+        system_capacity_kw: summary.system_size ? summary.system_size / 1000 : null,
+        latitude: lat,
+        longitude: lon,
+        zip_code: summary.postal_code || null,
+        city: summary.city || null,
+        state: summary.state || null,
+        install_date: null,
+      };
+    } else {
+      // SolarEdge
+      const validation = await validateCredentials(siteId, apiKey);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error || "Invalid SolarEdge credentials" },
+          { status: 400 }
+        );
+      }
+
+      const details = validation.details!;
+
+      systemRecord = {
         user_id: user.id,
         type: "solaredge",
         site_id: siteId,
@@ -54,28 +107,35 @@ export async function POST(request: NextRequest) {
         city: details.location.city,
         state: details.location.state,
         install_date: details.installationDate,
-      })
+      };
+    }
+
+    // ─── Save to database ───
+
+    const { data, error: dbError } = await supabase
+      .from("solar_systems")
+      .insert(systemRecord)
       .select()
       .single();
 
     if (dbError) {
       if (dbError.code === "23505") {
         return NextResponse.json(
-          { error: "This system is already connected" },
+          { error: "This system is already connected to your account." },
           { status: 409 }
         );
       }
+      console.error("DB insert error:", dbError);
       return NextResponse.json(
         { error: "Failed to save system" },
         { status: 500 }
       );
     }
 
-    // Auto-subscribe the user to weekly digest emails
-    // Uses service role to bypass RLS for the email_subscriptions table
+    // ─── Auto-subscribe to weekly digest ───
+
     try {
-      const { createServiceRoleClient: createSvcClient } = await import("@/lib/supabase/server");
-      const svcSupabase = createSvcClient();
+      const svcSupabase = createServiceRoleClient();
       await svcSupabase
         .from("email_subscriptions")
         .upsert(
@@ -89,14 +149,12 @@ export async function POST(request: NextRequest) {
           { onConflict: "email,site_id" }
         );
     } catch (subError) {
-      // Non-fatal: system is connected even if subscription fails
       console.warn("Failed to auto-subscribe for digest:", subError);
     }
 
     return NextResponse.json({
       success: true,
       system: data,
-      details,
     });
   } catch (error: any) {
     console.error("Connect system error:", error);

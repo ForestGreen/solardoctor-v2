@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
+  if (!cronSecret && process.env.NODE_ENV === "production") {
+    console.error("CRON_SECRET not set in production — cron endpoint is unprotected");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

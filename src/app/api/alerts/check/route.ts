@@ -15,9 +15,14 @@ import { decryptCredential } from "@/lib/crypto";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret (simple auth for cron jobs)
+    // Verify cron secret
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
+
+    if (!cronSecret && process.env.NODE_ENV === "production") {
+      console.error("CRON_SECRET not set in production — cron endpoint is unprotected");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

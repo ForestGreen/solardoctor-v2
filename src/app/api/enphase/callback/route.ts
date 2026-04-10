@@ -75,7 +75,13 @@ export async function GET(request: NextRequest) {
             type: "enphase",
             site_id: String(firstSystem.system_id),
             api_key: encryptCredential(accessToken),
-            username: encryptCredential(refreshToken), // Store refresh token (encrypted)
+            // COLUMN MAPPING NOTE: The `username` column is repurposed to store
+            // the encrypted Enphase refresh token. This is a schema workaround —
+            // the column was originally for SolarEdge usernames but is unused in v2.
+            // A proper `refresh_token` column should be added in a future migration.
+            // See: src/lib/enphase.ts (auto-refresh on 401) and
+            //      src/app/api/health-score/route.ts (reads decryptedRefreshToken)
+            username: encryptCredential(refreshToken),
             status: "active",
             system_capacity_kw: firstSystem.system_size ? firstSystem.system_size / 1000 : null,
             city: firstSystem.city || null,

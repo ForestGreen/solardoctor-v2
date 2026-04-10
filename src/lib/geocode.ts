@@ -21,7 +21,8 @@ export async function geocodePostalCode(
   const normalizedCountry = normalizeCountryCode(countryCode);
 
   const response = await fetch(
-    `https://api.zippopotam.us/${normalizedCountry}/${normalizedPostalCode}`
+    `https://api.zippopotam.us/${normalizedCountry}/${normalizedPostalCode}`,
+    { signal: AbortSignal.timeout(10000) }
   );
 
   if (!response.ok) {

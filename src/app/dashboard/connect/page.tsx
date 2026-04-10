@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import Link from "next/link";
-
-// Note: Credential encryption happens server-side via /api/systems/connect
-// The browser client insert is being replaced with a server call for security
 
 export default function ConnectSystemPage() {
   const router = useRouter();
@@ -40,81 +36,26 @@ export default function ConnectSystemPage() {
     setStep("validating");
 
     try {
-      const endpoint =
-        brand === "solaredge"
-          ? "/api/solaredge/validate"
-          : "/api/enphase/validate";
-
-      const payload =
-        brand === "solaredge"
-          ? { siteId: siteId.trim(), apiKey: apiKey.trim() }
-          : { systemId: siteId.trim(), accessToken: apiKey.trim() };
-
-      const res = await fetch(endpoint, {
+      // Single server-side call: validates, encrypts, saves, and auto-subscribes
+      const res = await fetch("/api/systems/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          brand,
+          siteId: siteId.trim(),
+          apiKey: apiKey.trim(),
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok || !data.valid) {
+      if (!res.ok) {
         setError(data.error || "Could not connect to your inverter.");
         setStep("credentials");
         return;
       }
 
-      setSystemDetails(data.details);
-
-      const supabase = createBrowserSupabaseClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setError("You must be logged in");
-        setStep("credentials");
-        return;
-      }
-
-      const { error: dbError } = await supabase.from("solar_systems").insert({
-        user_id: user.id,
-        type: brand,
-        site_id: siteId.trim(),
-        api_key: apiKey.trim(),
-        status: "active",
-        system_capacity_kw:
-          brand === "solaredge" ? data.details?.peakPower : data.system?.capacity,
-        latitude:
-          brand === "solaredge"
-            ? data.details?.location?.latitude
-            : data.system?.latitude,
-        longitude:
-          brand === "solaredge"
-            ? data.details?.location?.longitude
-            : data.system?.longitude,
-        zip_code:
-          brand === "solaredge"
-            ? data.details?.location?.zip
-            : data.system?.postalCode,
-        city:
-          brand === "solaredge" ? data.details?.location?.city : data.details?.city,
-        state:
-          brand === "solaredge" ? data.details?.location?.state : data.details?.state,
-        install_date:
-          brand === "solaredge" ? data.details?.installationDate : null,
-      });
-
-      if (dbError) {
-        if (dbError.code === "23505") {
-          setError("This system is already connected to your account.");
-        } else {
-          setError("Failed to save system. Please try again.");
-        }
-        setStep("credentials");
-        return;
-      }
-
+      setSystemDetails(data.system);
       setStep("success");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -134,11 +75,13 @@ export default function ConnectSystemPage() {
         {systemDetails && (
           <div className="bg-green-50 rounded-xl p-4 mb-6 text-left">
             <p className="font-medium text-green-900">
-              {systemDetails.name || systemDetails.system_name || systemDetails.system_public_name}
+              Site {systemDetails.site_id}
             </p>
-            <p className="text-sm text-green-700">
-              {(systemDetails.peakPower || systemDetails.system_size / 1000)} kW
-            </p>
+            {systemDetails.system_capacity_kw && (
+              <p className="text-sm text-green-700">
+                {systemDetails.system_capacity_kw} kW &middot; {systemDetails.city}, {systemDetails.state}
+              </p>
+            )}
           </div>
         )}
         <p className="text-gray-500 mb-6">

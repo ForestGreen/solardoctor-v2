@@ -19,6 +19,9 @@ export async function getExpectedProduction(
   params: PVWattsRequest
 ): Promise<PVWattsResponse> {
   const apiKey = process.env.NREL_API_KEY || "DEMO_KEY";
+  if (apiKey === "DEMO_KEY" && process.env.NODE_ENV === "production") {
+    console.warn("PVWatts: Using DEMO_KEY in production (100 req/day limit). Set NREL_API_KEY env var.");
+  }
 
   const queryParams = new URLSearchParams({
     api_key: apiKey,
@@ -37,7 +40,7 @@ export async function getExpectedProduction(
   });
 
   const url = `${PVWATTS_BASE}?${queryParams.toString()}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
 
   if (!response.ok) {
     const errorText = await response.text();

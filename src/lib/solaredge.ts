@@ -8,8 +8,12 @@ const BASE_URL = "https://monitoringapi.solaredge.com";
 
 // ─── Fetch Helpers ───
 
+// Note: SolarEdge API requires api_key as a query parameter — this is their
+// API design, not ours. The key is read-only (production data only).
+const FETCH_TIMEOUT = 15_000; // 15 seconds
+
 async function fetchSolarEdgeXML(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
   if (!response.ok) {
     throw new Error(`SolarEdge API error: ${response.status} ${response.statusText}`);
   }
@@ -17,8 +21,7 @@ async function fetchSolarEdgeXML(url: string): Promise<string> {
 }
 
 async function fetchSolarEdgeJSON(url: string): Promise<any> {
-  // Use .json format for easier parsing
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
   if (!response.ok) {
     throw new Error(`SolarEdge API error: ${response.status} ${response.statusText}`);
   }
