@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Sun, Shield, AlertTriangle, ChevronRight } from "lucide-react";
+import { Shield, AlertTriangle, ChevronRight } from "lucide-react";
 import { installers } from "@/lib/solar-orphan-data";
+import { SiteNav } from "@/components/SiteNav";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Solar Installer Went Out of Business? Here's What to Do - SolarDoctor",
@@ -22,20 +24,7 @@ export const metadata: Metadata = {
 export default function SolarOrphanPage() {
   return (
     <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-lg font-bold text-green-700">SolarDoctor</span>
-          </Link>
-          <div className="flex items-center gap-6 text-sm">
-            <Link href="/blog" className="text-gray-500 hover:text-gray-700">Blog</Link>
-            <Link href="/check" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-              Free Health Check
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero */}
@@ -205,20 +194,7 @@ export default function SolarOrphanPage() {
         }}
       />
 
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-white font-bold">SolarDoctor</span>
-          </div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/inverters" className="hover:text-white transition-colors">Inverter Guides</Link>
-            <Link href="/check" className="hover:text-white transition-colors">Free Health Score</Link>
-          </div>
-          <div className="text-sm">&copy; {new Date().getFullYear()} SolarDoctor</div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

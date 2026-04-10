@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { blogPostsBySlug, getAllSlugs } from "@/lib/blog-posts";
+import { SiteNav } from "@/components/SiteNav";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { AuthorByline } from "@/components/AuthorByline";
 
 interface BlogPostPageProps {
   params: { slug: string };
@@ -67,34 +70,11 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
-      <nav className="border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <Link href="/" className="text-lg font-bold text-green-700">
-            SolarDoctor
-          </Link>
-          <div className="flex items-center gap-6 text-sm">
-            <Link href="/blog" className="text-gray-500 hover:text-gray-700">
-              Blog
-            </Link>
-            <Link
-              href="/check"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            >
-              Free Health Score
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <nav className="mb-8 text-sm text-gray-400">
-          <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
-          <span className="mx-2">/</span>
-          <Link href="/blog" className="hover:text-gray-600 transition-colors">Blog</Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-600">{post.category}</span>
-        </nav>
+        <Breadcrumb items={[{label: "Home", href: "/"}, {label: "Blog", href: "/blog"}, {label: post.category}]} />
 
         <div className="flex items-center gap-3 mb-4">
           <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-50 text-green-700">
@@ -115,15 +95,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </h1>
 
         {/* Author E-E-A-T attribution */}
-        <div className="flex items-center gap-3 mb-8 p-4 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
-            R
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">Rich</p>
-            <p className="text-xs text-gray-500">Founder, SolarDoctor &middot; 20 years in the solar energy industry</p>
-          </div>
-        </div>
+        <AuthorByline />
 
         <div
           className="prose prose-gray max-w-none"

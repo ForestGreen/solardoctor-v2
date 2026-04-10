@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Sun, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { SiteNav } from "@/components/SiteNav";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { SiteFooter } from "@/components/SiteFooter";
 
 // Average peak sun hours by US region (hours/day annual average)
 const REGIONS: Record<string, { label: string; sunHours: number; states: string }> = {
@@ -46,26 +49,10 @@ export default function SolarProductionCalculator() {
 
   return (
     <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-lg font-bold text-green-700">SolarDoctor</span>
-          </Link>
-          <Link href="/check" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
-            Free Health Check
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <nav className="text-sm text-gray-400 mb-6">
-          <Link href="/" className="hover:text-gray-600">Home</Link>
-          <span className="mx-2">/</span>
-          <Link href="/blog" className="hover:text-gray-600">Guides</Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-600">Production Calculator</span>
-        </nav>
+        <Breadcrumb items={[{label: "Home", href: "/"}, {label: "Guides", href: "/blog"}, {label: "Production Calculator"}]} />
 
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
           How Much Should My Solar Panels Produce?
@@ -297,20 +284,7 @@ export default function SolarProductionCalculator() {
         }}
       />
 
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4 mt-16">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-white font-bold">SolarDoctor</span>
-          </div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/check" className="hover:text-white transition-colors">Free Health Check</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

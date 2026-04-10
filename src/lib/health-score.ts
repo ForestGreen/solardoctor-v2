@@ -8,6 +8,7 @@ import type {
   SolarEdgeEnergyValue,
 } from "@/types";
 import { getElectricityRate } from "@/lib/electricity-rates";
+import { MONTH_NAMES_FULL } from "@/lib/constants";
 
 const SCORE_THRESHOLDS: { min: number; max: number; status: HealthStatus }[] = [
   { min: 110, max: Infinity, status: "overperforming" },
@@ -83,6 +84,24 @@ export function getStatusEmoji(status: HealthStatus): string {
       return "N/A";
   }
 }
+
+/**
+ * Unified status configuration — use this instead of redefining in page files.
+ * Replaces the STATUS_CONFIG objects previously duplicated in check/page.tsx
+ * and report/[id]/page.tsx.
+ */
+export const STATUS_CONFIG: Record<
+  HealthStatus,
+  { color: string; textColor: string; bgColor: string; label: string }
+> = {
+  overperforming: { color: "#3b82f6", textColor: "text-blue-700", bgColor: "bg-blue-50", label: "Overperforming" },
+  healthy: { color: "#22c55e", textColor: "text-green-700", bgColor: "bg-green-50", label: "Healthy" },
+  underperforming: { color: "#eab308", textColor: "text-yellow-700", bgColor: "bg-yellow-50", label: "Underperforming" },
+  problem: { color: "#f97316", textColor: "text-orange-700", bgColor: "bg-orange-50", label: "Problem Detected" },
+  critical: { color: "#ef4444", textColor: "text-red-700", bgColor: "bg-red-50", label: "Critical" },
+  offline: { color: "#6b7280", textColor: "text-gray-700", bgColor: "bg-gray-50", label: "Offline" },
+  no_data: { color: "#9ca3af", textColor: "text-gray-500", bgColor: "bg-gray-50", label: "No Data" },
+};
 
 export function calculateMonthlyScore(
   actualWh: number,
@@ -231,19 +250,125 @@ export function checkForAlerts(
 }
 
 function getMonthName(month: number): string {
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  return months[month - 1];
+  return MONTH_NAMES_FULL[month - 1];
+}
+
+// ─── Unified Health Score Calculation ───
+// This replaces the duplicated 40-line pattern that was in 4 API routes.
+
+import { getSystemDataForHealthScore } from "@/lib/solaredge";
+import {
+  getEnphaseDataForHealthScore,
+  convertEnphaseIntervalsToMonthlyEnergy,
+  type EnphaseRefreshContext,
+} from "@/lib/enphase";
+import { getExpectedMonthlyKwh } from "@/lib/pvwatts";
+import { geocodePostalCode } from "@/lib/geocode";
+import { NATIONAL_AVG_KWH_PER_KW_YEAR, MONTHLY_PRODUCTION_FRACTIONS } from "@/lib/constants";
+
+export interface CalculateHealthScoreParams {
+  siteId: string;
+  apiKey: string; // must be decrypted before passing
+  brand: "solaredge" | "enphase";
+  months?: number;
+  /** For Enphase: provide lat/lon/capacity if known (from DB) to skip geocoding */
+  knownLocation?: { lat: number; lon: number; capacityKw: number; city?: string; state?: string };
+  refreshContext?: EnphaseRefreshContext;
+}
+
+/**
+ * Unified health score calculation for any system.
+ * Handles both SolarEdge and Enphase, with PVWatts fallback.
+ *
+ * Used by:
+ * - /api/health-score (authenticated dashboard)
+ * - /api/health-score/preview (unauthenticated /check)
+ * - /api/cron/weekly-digest (weekly email)
+ * - /api/alerts/check (monthly alerts)
+ */
+export async function calculateHealthScoreForSystem(
+  params: CalculateHealthScoreParams
+): Promise<SystemHealthSummary> {
+  const { siteId, apiKey, brand, months = 12, knownLocation, refreshContext } = params;
+
+  if (brand === "enphase") {
+    const developerApiKey = process.env.ENPHASE_API_KEY;
+    if (!developerApiKey) {
+      throw new Error("Enphase support is not configured yet.");
+    }
+
+    const { summary: enphaseSummary, production } =
+      await getEnphaseDataForHealthScore(siteId, developerApiKey, apiKey, months, refreshContext);
+
+    // Determine location
+    let lat = knownLocation?.lat ?? 0;
+    let lon = knownLocation?.lon ?? 0;
+    let city = knownLocation?.city || enphaseSummary.city || "";
+    let state = knownLocation?.state || enphaseSummary.state || "";
+
+    if ((lat === 0 || lon === 0) && enphaseSummary.postal_code) {
+      try {
+        const loc = await geocodePostalCode(enphaseSummary.postal_code, enphaseSummary.country || "US");
+        lat = loc.latitude;
+        lon = loc.longitude;
+        city = city || loc.city;
+        state = state || loc.state;
+      } catch {}
+    }
+
+    const capacityKw = knownLocation?.capacityKw || enphaseSummary.system_size / 1000;
+    const expectedMonthlyKwh = await getExpectedMonthlyKwhSafe(lat, lon, capacityKw);
+    const monthlyEnergy = convertEnphaseIntervalsToMonthlyEnergy(production);
+
+    return buildNormalizedHealthSummary(
+      siteId,
+      {
+        name: enphaseSummary.system_name || enphaseSummary.system_public_name || `Enphase System ${siteId}`,
+        capacityKw,
+        city,
+        state,
+        postalCode: enphaseSummary.postal_code,
+        country: enphaseSummary.country,
+        currentPowerW: enphaseSummary.current_power ?? 0,
+        lifetimeEnergyWh: enphaseSummary.energy_lifetime ?? 0,
+      },
+      monthlyEnergy,
+      expectedMonthlyKwh
+    );
+  } else {
+    // SolarEdge
+    const { details, overview, monthlyEnergy } =
+      await getSystemDataForHealthScore(siteId, apiKey, months);
+
+    const lat = knownLocation?.lat ?? details.location.latitude;
+    const lon = knownLocation?.lon ?? details.location.longitude;
+    const capacityKw = knownLocation?.capacityKw ?? details.peakPower;
+
+    const expectedMonthlyKwh = await getExpectedMonthlyKwhSafe(lat, lon, capacityKw);
+
+    return buildHealthSummary(siteId, details, overview, monthlyEnergy, expectedMonthlyKwh);
+  }
+}
+
+/**
+ * PVWatts with fallback to national average when API is unavailable.
+ */
+async function getExpectedMonthlyKwhSafe(
+  lat: number,
+  lon: number,
+  capacityKw: number
+): Promise<number[]> {
+  if (lat === 0 && lon === 0) {
+    // No location data — use national average
+    const annualKwh = capacityKw * NATIONAL_AVG_KWH_PER_KW_YEAR;
+    return MONTHLY_PRODUCTION_FRACTIONS.map(f => Math.round(annualKwh * f));
+  }
+
+  try {
+    return await getExpectedMonthlyKwh(lat, lon, capacityKw);
+  } catch {
+    console.warn("PVWatts unavailable, using national average fallback");
+    const annualKwh = capacityKw * NATIONAL_AVG_KWH_PER_KW_YEAR;
+    return MONTHLY_PRODUCTION_FRACTIONS.map(f => Math.round(annualKwh * f));
+  }
 }

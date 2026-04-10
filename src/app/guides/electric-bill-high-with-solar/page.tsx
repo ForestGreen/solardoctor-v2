@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { Sun, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
+import { SiteNav } from "@/components/SiteNav";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { AuthorByline } from "@/components/AuthorByline";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Why Is My Electric Bill So High With Solar Panels? (2026 Guide) - SolarDoctor",
@@ -18,26 +22,10 @@ export const metadata: Metadata = {
 export default function ElectricBillHighPage() {
   return (
     <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-lg font-bold text-green-700">SolarDoctor</span>
-          </Link>
-          <Link href="/check" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
-            Free Health Check
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <nav className="text-sm text-gray-400 mb-6">
-          <Link href="/" className="hover:text-gray-600">Home</Link>
-          <span className="mx-2">/</span>
-          <Link href="/blog" className="hover:text-gray-600">Guides</Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-600">High Electric Bill With Solar</span>
-        </nav>
+        <Breadcrumb items={[{label: "Home", href: "/"}, {label: "Guides", href: "/blog"}, {label: "High Electric Bill With Solar"}]} />
 
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">
           Why Is My Electric Bill So High With Solar Panels?
@@ -46,13 +34,7 @@ export default function ElectricBillHighPage() {
           You spent thousands on solar. Your installer promised savings. But your electric bill is still high — or barely changed. Here are the 7 most common reasons, and what to do about each one.
         </p>
 
-        <div className="flex items-center gap-3 mb-8 p-4 bg-gray-50 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">R</div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">Rich</p>
-            <p className="text-xs text-gray-500">Founder, SolarDoctor &middot; 20 years in the solar energy industry</p>
-          </div>
-        </div>
+        <AuthorByline />
 
         <div className="prose prose-gray max-w-none">
           <div className="bg-amber-50 rounded-xl p-5 not-prose mb-8">
@@ -194,20 +176,7 @@ export default function ElectricBillHighPage() {
         ],
       })}} />
 
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-white font-bold">SolarDoctor</span>
-          </div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/check" className="hover:text-white transition-colors">Free Health Check</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

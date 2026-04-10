@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Sun } from "lucide-react";
 import type { Metadata } from "next";
+import { SiteNav } from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Terms of Service - SolarDoctor",
@@ -11,14 +11,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-solar-yellow" />
-            <span className="text-lg font-bold text-green-700">SolarDoctor</span>
-          </Link>
-        </div>
-      </nav>
+      <SiteNav variant="minimal" />
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 prose prose-gray">
         <h1>Terms of Service</h1>
