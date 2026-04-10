@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Free Solar Health Score | Check Your System Now - SolarDoctor",
@@ -25,5 +26,5 @@ export const metadata: Metadata = {
 };
 
 export default function CheckLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <Suspense fallback={null}>{children}</Suspense>;
 }
